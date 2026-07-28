@@ -28,7 +28,7 @@
     background: radial-gradient(1200px 800px at 80% -10%, #3a2418 0%, transparent 60%),
                 radial-gradient(900px 700px at -10% 110%, #2a1810 0%, transparent 55%),
                 linear-gradient(160deg, var(--bg-1), var(--bg-2));
-    color:var(--text); min-height:100vh; overflow-x:hidden;
+    color:var(--text); overflow-x:hidden;
     padding:0;
   }
   .wrap{ max-width:860px; margin:0 auto; }
@@ -244,7 +244,7 @@
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0);}
 
   /* ===== App layout: sidebar + main ===== */
-  .app{ display:flex; min-height:100vh; }
+  .app{ display:flex; }
   .sidebar{
     width:76px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--line);
     display:flex; flex-direction:column; align-items:center; padding:16px 0 12px;
@@ -274,6 +274,8 @@
   @media(max-width:768px){
     .app{ display:block; }
     .main{ display:block; width:100%; }
+    .panel{ display:none; padding:16px 16px 100px; }
+    .panel.on, #panel-food, #panel-brand, #panel-coin.on{ display:block !important; }
     .sidebar{
       width:100%; height:auto; flex-direction:row; justify-content:space-around;
       position:fixed; bottom:0; left:0; right:0; padding:8px 0 24px;
@@ -284,8 +286,6 @@
     .sidebar-logo{ display:none; }
     .sidebar-nav{ flex-direction:row; width:auto; padding:0; }
     .nav-item{ padding:6px 12px; }
-    .panel{ padding:16px 16px 100px; }
-    .panel.on{ display:block; }
   }
 
   /* ===== Coin flip panel ===== */
