@@ -293,6 +293,7 @@
     .coin-field input{ padding:8px 12px; font-size:14px; }
     .coin-stage{ height:150px; margin-bottom:8px; cursor:pointer; }
     .coin-3d{ width:120px; height:120px; }
+    .coin-tap{ width:130px; height:130px; }
     .coin-face .emoji{ font-size:32px; }
     .coin-face .label{ font-size:18px; }
     .coin-result{ min-height:40px; margin-bottom:12px; }
@@ -351,6 +352,11 @@
   }
   @keyframes stageGlow{ 0%,100%{ opacity:.35; } 50%{ opacity:1; } }
   .coin-3d{ position:relative; z-index:1; }
+  .coin-tap{
+    position:absolute; top:50%; left:50%; width:160px; height:160px;
+    transform:translate(-50%,-50%); border:none; background:transparent;
+    cursor:pointer; z-index:10; border-radius:50%; -webkit-tap-highlight-color:transparent;
+  }
   .coin-history{ margin-top:24px; }
   .coin-history h3{ font-size:13px; color:var(--text-dim); margin-bottom:10px; font-weight:600; }
   .coin-history-list{ display:flex; flex-direction:column; gap:8px; }
@@ -512,7 +518,7 @@
       </div>
     </div>
     <div class="coin-stage">
-      <div class="coin-3d" id="coin" onclick="flipCoin()">
+      <div class="coin-3d" id="coin">
         <div class="coin-face coin-front" id="coinFront">
           <span class="emoji">🪙</span>
           <span class="label" id="coinLabelA">喝</span>
@@ -522,6 +528,7 @@
           <span class="label" id="coinLabelB">不喝</span>
         </div>
       </div>
+      <button class="coin-tap" onclick="flipCoin()" aria-label="抛硬币"></button>
     </div>
     <div class="coin-result" id="coinResult">
       <div class="comment">点硬币，让命运替你决定</div>
@@ -1298,11 +1305,6 @@ function initCoin(){
   pc.innerHTML=COIN_PRESETS.map(p=>`<div class="coin-preset" onclick="applyCoinPreset('${p.q}','${p.a}','${p.b}')">${p.emoji} ${p.q}</div>`).join("");
   updateCoinLabels();
   renderCoinHistory();
-  // iOS Safari touch support - preventDefault blocks synthetic click
-  document.getElementById("coin").addEventListener("touchstart",function(e){
-    e.preventDefault();
-    flipCoin();
-  },{passive:false});
 }
 function applyCoinPreset(q,a,b){
   document.getElementById("coinQuestion").value=q;
