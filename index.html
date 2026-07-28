@@ -341,13 +341,16 @@
   .btn-flip:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
   /* 硬币就是按钮 - 全局隐藏独立按钮 */
   .btn-flip{ display:none; }
-  /* 硬币脉冲发光 - 提示可点击 */
-  .coin-3d{ animation:coinGlow 2.5s ease-in-out infinite; }
-  @keyframes coinGlow{
-    0%,100%{ filter:drop-shadow(0 0 12px rgba(255,212,59,.2)); }
-    50%{ filter:drop-shadow(0 0 30px rgba(255,212,59,.5)); }
+  /* 硬币发光提示 - 放在 stage 上，避免 filter 破坏 iOS Safari 3D 渲染 */
+  .coin-stage::after{
+    content:""; position:absolute; top:50%; left:50%; width:200px; height:200px;
+    border-radius:50%; pointer-events:none; z-index:0;
+    background:radial-gradient(circle, rgba(255,212,59,.18) 0%, transparent 65%);
+    transform:translate(-50%,-50%);
+    animation:stageGlow 2.5s ease-in-out infinite;
   }
-  .coin-3d:hover{ filter:drop-shadow(0 0 35px rgba(255,212,59,.6)) brightness(1.1); animation:none; }
+  @keyframes stageGlow{ 0%,100%{ opacity:.35; } 50%{ opacity:1; } }
+  .coin-3d{ position:relative; z-index:1; }
   .coin-history{ margin-top:24px; }
   .coin-history h3{ font-size:13px; color:var(--text-dim); margin-bottom:10px; font-weight:600; }
   .coin-history-list{ display:flex; flex-direction:column; gap:8px; }
@@ -1295,6 +1298,11 @@ function initCoin(){
   pc.innerHTML=COIN_PRESETS.map(p=>`<div class="coin-preset" onclick="applyCoinPreset('${p.q}','${p.a}','${p.b}')">${p.emoji} ${p.q}</div>`).join("");
   updateCoinLabels();
   renderCoinHistory();
+  // iOS Safari touch support - preventDefault blocks synthetic click
+  document.getElementById("coin").addEventListener("touchstart",function(e){
+    e.preventDefault();
+    flipCoin();
+  },{passive:false});
 }
 function applyCoinPreset(q,a,b){
   document.getElementById("coinQuestion").value=q;
