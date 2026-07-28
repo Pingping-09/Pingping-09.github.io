@@ -291,14 +291,14 @@
     .coin-input-area{ padding:12px; margin-bottom:12px; }
     .coin-field{ margin-bottom:10px; }
     .coin-field input{ padding:8px 12px; font-size:14px; }
-    .coin-stage{ height:150px; margin-bottom:8px; }
+    .coin-stage{ height:150px; margin-bottom:8px; cursor:pointer; }
     .coin-3d{ width:120px; height:120px; }
     .coin-face .emoji{ font-size:32px; }
     .coin-face .label{ font-size:18px; }
     .coin-result{ min-height:40px; margin-bottom:12px; }
     .coin-result .verdict{ font-size:26px; }
     .coin-result .comment{ margin-top:4px; }
-    .btn-flip{ padding:12px; font-size:16px; }
+    .btn-flip{ display:none; }
   }
 
   /* ===== Coin flip panel ===== */
@@ -319,7 +319,7 @@
   .coin-options-row{ display:flex; gap:12px; }
   .coin-options-row .coin-field{ flex:1; margin-bottom:0; }
   .coin-stage{ perspective:800px; display:flex; justify-content:center; align-items:center; height:200px; margin-bottom:16px; position:relative; }
-  .coin-3d{ width:150px; height:150px; position:relative; transform-style:preserve-3d; transition:transform 1.8s cubic-bezier(.22,.61,.36,1); }
+  .coin-3d{ width:150px; height:150px; position:relative; transform-style:preserve-3d; transition:transform 1.8s cubic-bezier(.22,.61,.36,1); cursor:pointer; }
   .coin-3d.flipping{ animation:coinShake .12s ease-in-out 3; }
   @keyframes coinShake{ 0%,100%{ margin-top:0 } 50%{ margin-top:-6px } }
   .coin-face{ position:absolute; inset:0; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; backface-visibility:hidden; font-size:26px; font-weight:700; gap:4px; }
@@ -501,7 +501,7 @@
       </div>
     </div>
     <div class="coin-stage">
-      <div class="coin-3d" id="coin">
+      <div class="coin-3d" id="coin" onclick="flipCoin()">
         <div class="coin-face coin-front" id="coinFront">
           <span class="emoji">🪙</span>
           <span class="label" id="coinLabelA">喝</span>
@@ -513,7 +513,7 @@
       </div>
     </div>
     <div class="coin-result" id="coinResult">
-      <div class="comment">点下面按钮，让硬币替你决定</div>
+      <div class="comment">点硬币，让命运替你决定</div>
     </div>
     <button class="btn-flip" id="flipBtn" onclick="flipCoin()">🪙 抛硬币决定</button>
     <div class="coin-history" id="coinHistorySection" style="display:none">
