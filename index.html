@@ -298,7 +298,6 @@
     .coin-result{ min-height:40px; margin-bottom:12px; }
     .coin-result .verdict{ font-size:26px; }
     .coin-result .comment{ margin-top:4px; }
-    .btn-flip{ display:none; }
   }
 
   /* ===== Coin flip panel ===== */
@@ -340,6 +339,15 @@
   .btn-flip:hover{ filter:brightness(1.1); transform:translateY(-1px); }
   .btn-flip:active{ transform:translateY(0); }
   .btn-flip:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+  /* 硬币就是按钮 - 全局隐藏独立按钮 */
+  .btn-flip{ display:none; }
+  /* 硬币脉冲发光 - 提示可点击 */
+  .coin-3d{ animation:coinGlow 2.5s ease-in-out infinite; }
+  @keyframes coinGlow{
+    0%,100%{ filter:drop-shadow(0 0 12px rgba(255,212,59,.2)); }
+    50%{ filter:drop-shadow(0 0 30px rgba(255,212,59,.5)); }
+  }
+  .coin-3d:hover{ filter:drop-shadow(0 0 35px rgba(255,212,59,.6)) brightness(1.1); animation:none; }
   .coin-history{ margin-top:24px; }
   .coin-history h3{ font-size:13px; color:var(--text-dim); margin-bottom:10px; font-weight:600; }
   .coin-history-list{ display:flex; flex-direction:column; gap:8px; }
