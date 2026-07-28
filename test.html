@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>测试页</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body{
+    font-family:-apple-system,"PingFang SC",sans-serif;
+    background:#1a1310; color:#f5ece3; padding:16px; padding-bottom:80px;
+  }
+  h1{ font-size:24px; margin-bottom:16px; }
+  .test-box{
+    background:#2a1f18; border:1px solid rgba(255,255,255,.08); border-radius:12px;
+    padding:20px; margin-bottom:16px;
+  }
+  .test-box h2{ font-size:18px; color:#ff8c5a; margin-bottom:8px; }
+  .test-box p{ color:#b8a99a; line-height:1.6; }
+  .bottom-bar{
+    position:fixed; bottom:0; left:0; right:0;
+    background:rgba(26,19,16,.96); border-top:1px solid rgba(255,255,255,.08);
+    padding:8px 0 24px; display:flex; justify-content:space-around;
+  }
+  .bottom-bar button{
+    background:none; border:none; color:#7d6e60; font-family:inherit;
+    font-size:12px; font-weight:600; display:flex; flex-direction:column;
+    align-items:center; gap:4px; cursor:pointer;
+  }
+  .bottom-bar button .ico{ font-size:20px; }
+  .bottom-bar button.on{ color:#ff8c5a; }
+</style>
+</head>
+<body>
+
+<h1>🍎 测试页 - 能看到说明正常</h1>
+
+<div class="test-box">
+  <h2>测试内容1</h2>
+  <p>如果你在手机上能看到这些文字，说明页面本身没问题，问题出在三合一工作台的代码里。</p>
+</div>
+
+<div class="test-box">
+  <h2>测试内容2</h2>
+  <p>这是第二段测试内容。背景是深棕色，文字是浅色，应该清晰可见。</p>
+</div>
+
+<div class="test-box">
+  <h2>测试内容3</h2>
+  <p>底部导航栏应该也能看到。如果以上内容都正常显示，我会逐步排查三合一工作台的问题。</p>
+</div>
+
+<div class="bottom-bar">
+  <button class="on"><span class="ico">🍜</span><span>吃什么</span></button>
+  <button><span class="ico">🎰</span><span>选品牌</span></button>
+  <button><span class="ico">🪙</span><span>扔硬币</span></button>
+</div>
+
+</body>
+</html>
