@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ff6b35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="今天吃啥">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<title>今天吃啥 · 餐饮决策工作台</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --bg-1:#1a1310; --bg-2:#241a15; --bg-3:#2e2119;
+    --card:#2a1f18; --card-2:#3a2c20;
+    --line:rgba(255,255,255,.08);
+    --text:#f5ece3; --text-dim:#b8a99a; --text-mute:#7d6e60;
+    --accent:#ff6b35; --accent-2:#ff8c5a; --accent-soft:rgba(255,107,53,.16);
+    --gold:#f5a623; --green:#6cc24a; --red:#e74c3c;
+    --radius:18px;
+    --shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+  html,body{ height:100%; }
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background: radial-gradient(1200px 800px at 80% -10%, #3a2418 0%, transparent 60%),
+                radial-gradient(900px 700px at -10% 110%, #2a1810 0%, transparent 55%),
+                linear-gradient(160deg, var(--bg-1), var(--bg-2));
+    color:var(--text); min-height:100vh; overflow-x:hidden;
+    padding:24px;
+  }
+  .wrap{ max-width:860px; margin:0 auto; }
+
+  .header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand .logo{
+    width:46px;height:46px;border-radius:14px;
+    background:linear-gradient(135deg,var(--accent),var(--gold));
+    display:flex;align-items:center;justify-content:center;font-size:24px;
+    box-shadow:0 6px 20px rgba(255,107,53,.4);
+  }
+  .brand h1{ font-size:22px; font-weight:700; letter-spacing:.5px; }
+  .brand .sub{ font-size:12px; color:var(--text-mute); margin-top:2px;}
+  .top-controls{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .city-sel{
+    display:flex; align-items:center; gap:6px; background:var(--bg-3);
+    border:1px solid var(--line); border-radius:12px; padding:6px 10px;
+  }
+  .city-sel .ico{ font-size:14px; }
+  .city-sel select{
+    background:transparent; border:none; color:var(--text); font-size:13px;
+    font-family:inherit; font-weight:700; cursor:pointer; outline:none; max-width:120px;
+  }
+  .city-sel select option{ background:var(--bg-2); color:var(--text); }
+  .city-sel select optgroup{ background:var(--bg-2); color:var(--accent-2); font-weight:700; }
+  .meal-tabs{ display:flex; gap:6px; background:var(--bg-3); padding:6px; border-radius:14px; border:1px solid var(--line);}
+  .meal-tabs button{
+    border:none;background:transparent;color:var(--text-dim);
+    padding:9px 20px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;
+    transition:.2s; font-family:inherit;
+  }
+  .meal-tabs button.on{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 4px 14px rgba(255,107,53,.4);}
+  .meal-tabs button .ico{ margin-right:5px;}
+
+  .filter{ margin-bottom:18px; }
+  .filter-bar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px; background:var(--card); border:1px solid var(--line);
+    border-radius:12px; cursor:pointer; user-select:none; transition:.15s;
+  }
+  .filter-bar:hover{ border-color:rgba(255,255,255,.16); }
+  .filter-bar .ttl{ font-size:13px; color:var(--text-dim); font-weight:600;}
+  .filter-bar .ttl b{ color:var(--accent-2); font-weight:600; }
+  .filter-bar .toggle{ font-size:12px; color:var(--text-mute); }
+  .cat-pills{ display:flex; flex-wrap:wrap; gap:8px; padding:12px 4px 4px; }
+  .cat-pills.hidden{ display:none; }
+  .pill{
+    padding:6px 14px;border-radius:20px;font-size:13px;background:var(--bg-3);
+    color:var(--text-dim);cursor:pointer;border:1px solid var(--line);transition:.15s;
+    font-family:inherit;
+  }
+  .pill:hover{ color:var(--text); }
+  .pill.on{ background:var(--accent-soft); color:var(--accent-2); border-color:rgba(255,107,53,.3); }
+  .pill .cnt{ font-size:10px; color:var(--text-mute); margin-left:4px; }
+  .pill.on .cnt{ color:var(--accent-2); }
+
+  .stage{ display:flex; flex-direction:column; align-items:center; justify-content:flex-start; min-height:420px; padding:8px 0; }
+  .card-wrap{ perspective:1600px; width:340px; height:380px; position:relative; }
+  .card{
+    width:100%;height:100%;position:relative;
+    transform-style:preserve-3d; transition:transform .55s cubic-bezier(.5,.1,.3,1.15);
+  }
+  .card.flip{ transform:rotateY(180deg); }
+  .face{
+    position:absolute;inset:0;border-radius:24px;
+    backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;text-align:center;
+  }
+  .face.front{
+    background:linear-gradient(165deg,var(--card-2),var(--card));
+    border:1px solid var(--line); box-shadow:var(--shadow); overflow:hidden;
+  }
+  .face.front::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(220px 160px at 50% 18%, rgba(255,140,90,.18), transparent 70%);
+    pointer-events:none;
+  }
+  .face.back{ transform:rotateY(180deg); background:linear-gradient(165deg,#3a2c20,#2a1f18); border:1px solid var(--line); }
+  .dish-emoji{ font-size:64px; margin-bottom:4px; filter:drop-shadow(0 6px 14px rgba(0,0,0,.5)); line-height:1; }
+  .dish-name{ font-size:28px; font-weight:800; letter-spacing:1px; margin:4px 0 4px; }
+  .dish-cat{ font-size:12px; color:var(--accent-2); background:var(--accent-soft); padding:3px 12px; border-radius:20px; display:inline-block; margin-bottom:10px;}
+  .dish-desc{ font-size:13px; color:var(--text-dim); line-height:1.6; max-width:240px; margin-bottom:10px;}
+  .dish-meta{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .dish-meta span{ font-size:11px; color:var(--text-mute); background:var(--bg-3); padding:3px 9px; border-radius:10px;}
+  .shop-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:12px; }
+  .shop-link{
+    font-size:13px; text-decoration:none;
+    padding:6px 14px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;
+    transition:.15s;
+  }
+  .shop-link.amap{ color:var(--gold); background:rgba(245,166,35,.1); border:1px solid rgba(245,166,35,.25); }
+  .shop-link.amap:hover{ background:rgba(245,166,35,.18); border-color:rgba(245,166,35,.4); }
+  .shop-link.dp{ color:var(--green); background:rgba(108,194,74,.1); border:1px solid rgba(108,194,74,.25); }
+  .shop-link.dp:hover{ background:rgba(108,194,74,.18); border-color:rgba(108,194,74,.4); }
+
+  .actions{ display:flex; gap:12px; margin-top:24px; flex-wrap:wrap; justify-content:center;}
+  .btn{
+    border:none; cursor:pointer; font-family:inherit; font-weight:600; font-size:15px;
+    padding:13px 26px; border-radius:14px; transition:.18s; display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary{ background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; box-shadow:0 6px 20px rgba(255,107,53,.4);}
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 10px 28px rgba(255,107,53,.55);}
+  .btn-primary:active{ transform:translateY(0);}
+  .btn-ghost{ background:var(--bg-3); color:var(--text-dim); border:1px solid var(--line);}
+  .btn-ghost:hover{ color:var(--text); border-color:rgba(255,255,255,.18);}
+  .btn-gold{ background:linear-gradient(135deg,var(--gold),#ffb74d); color:#241a15; }
+  .btn-gold:hover{ transform:translateY(-2px);}
+
+  .today{ margin-top:26px; }
+  .today h3{ font-size:13px; color:var(--text-mute); margin-bottom:10px; font-weight:600;}
+  .today-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .today-cell{
+    background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 12px;
+    text-align:center; transition:.2s; position:relative; cursor:pointer;
+  }
+  .today-cell .lbl{ font-size:12px; color:var(--text-mute); margin-bottom:5px;}
+  .today-cell .nm{ font-size:14px; font-weight:700; min-height:20px;}
+  .today-cell .sub-shop{ font-size:11px; color:var(--gold); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .today-cell.empty .nm{ color:var(--text-mute); font-weight:400; font-size:13px;}
+  .today-cell.set{ border-color:rgba(255,107,53,.4); background:linear-gradient(160deg,var(--accent-soft),var(--card));}
+  .today-cell .clr{ position:absolute; top:6px; right:8px; font-size:13px; color:var(--text-mute); cursor:pointer; opacity:0; transition:.15s;}
+  .today-cell.set:hover .clr{ opacity:1;}
+  .today-cell .clr:hover{ color:var(--red);}
+
+  .week{ margin-top:26px; }
+  .week-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;}
+  .week-head h3{ font-size:15px; font-weight:700;}
+  .week-head h3 .sub{ font-size:12px; color:var(--text-mute); font-weight:400; margin-left:8px;}
+  table{ width:100%; border-collapse:collapse; background:var(--card); border-radius:14px; overflow:hidden; border:1px solid var(--line);}
+  th,td{ padding:10px 10px; text-align:center; font-size:12px; border-bottom:1px solid var(--line);}
+  th{ background:var(--bg-3); color:var(--text-dim); font-weight:600; font-size:11px;}
+  td:first-child{ color:var(--accent-2); font-weight:600; background:rgba(255,255,255,.02);}
+  td .em{ font-size:15px; margin-right:3px; vertical-align:middle;}
+  td .wk-shop{ font-size:10px; color:var(--green); display:block; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-decoration:none;}
+  td .wk-shop:hover{ text-decoration:underline; }
+  tr:last-child td{ border-bottom:none;}
+  tr:hover td{ background:rgba(255,255,255,.02);}
+
+  /* ===== 随机品牌 · 幸运大转盘 ===== */
+  .brand-zone{ margin-top:26px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px; }
+  .brand-zone h3{ font-size:15px; font-weight:700; margin-bottom:4px; }
+  .brand-zone h3 .sub{ font-size:12px; color:var(--text-mute); font-weight:400; margin-left:8px; }
+  .brand-cats{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 18px; }
+  .brand-cat{
+    padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;
+    background:var(--bg-3); color:var(--text-dim); border:1px solid var(--line); transition:.15s; font-family:inherit;
+    display:inline-flex; align-items:center; gap:5px;
+  }
+  .brand-cat:hover{ color:var(--text); }
+  .brand-cat.on{ background:var(--accent-soft); color:var(--accent-2); border-color:rgba(255,107,53,.3); }
+  .wheel-stage{
+    display:flex; flex-direction:column; align-items:center; position:relative;
+  }
+  .wheel-box{
+    position:relative; width:min(340px,92vw); height:min(340px,92vw); max-width:340px; max-height:340px;
+    filter:drop-shadow(0 12px 30px rgba(0,0,0,.5));
+  }
+  .wheel-svg{
+    width:100%; height:100%; transform:rotate(-90deg); /* 0° starts at top */
+    transition:transform 0s;
+  }
+  .wheel-svg.spinning{ transition:transform 4.5s cubic-bezier(0.15,0,0.1,1); }
+  .wheel-sector{ stroke:rgba(0,0,0,.15); stroke-width:1; }
+  .wheel-text{
+    font-size:12px; font-weight:700; fill:#fff; text-anchor:middle; dominant-baseline:middle;
+    text-shadow:0 1px 3px rgba(0,0,0,.4); pointer-events:none;
+  }
+  .wheel-pointer{
+    position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:12px solid transparent; border-right:12px solid transparent;
+    border-top:22px solid var(--gold); filter:drop-shadow(0 2px 4px rgba(0,0,0,.4)); z-index:3;
+  }
+  .wheel-center{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:78px; height:78px; border-radius:50%; z-index:4;
+    background:linear-gradient(135deg,var(--accent),var(--gold));
+    border:4px solid var(--card); box-shadow:0 6px 20px rgba(0,0,0,.4);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:14px; cursor:pointer; user-select:none;
+    transition:transform .15s, filter .15s;
+  }
+  .wheel-center:active{ transform:translate(-50%,-50%) scale(.92); }
+  .wheel-center .small{ font-size:10px; font-weight:600; opacity:.9; margin-top:1px; }
+  .wheel-center:disabled{ filter:grayscale(.6); cursor:not-allowed; }
+  .wheel-result{
+    margin-top:18px; min-height:90px; width:100%; text-align:center;
+    background:var(--bg-3); border-radius:14px; padding:16px; opacity:0;
+    transform:translateY(10px); transition:.35s;
+  }
+  .wheel-result.show{ opacity:1; transform:translateY(0); }
+  .wheel-result .b-emoji{ font-size:38px; line-height:1; }
+  .wheel-result .b-name{ font-size:22px; font-weight:800; letter-spacing:.5px; margin-top:6px; }
+  .wheel-result .b-tag{ font-size:12px; color:var(--text-dim); margin-top:4px; }
+  .wheel-result .b-slogan{ font-size:11px; color:var(--text-mute); margin-top:2px; }
+  .wheel-hint{ color:var(--text-mute); font-size:13px; text-align:center; padding:28px 0; }
+  .brand-links{ display:flex; gap:8px; justify-content:center; margin-top:12px; }
+  .wheel-spin-again{
+    margin-top:10px; background:transparent; border:1px solid var(--line); color:var(--text-dim);
+    padding:6px 16px; border-radius:20px; font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  .wheel-spin-again:hover{ color:var(--text); border-color:rgba(255,255,255,.2); }
+
+  .foot{ text-align:center; color:var(--text-mute); font-size:11px; margin-top:26px; padding:16px; line-height:1.7;}
+
+  .toast{
+    position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(40px);
+    background:var(--card-2); border:1px solid var(--line); color:var(--text);
+    padding:12px 22px; border-radius:12px; font-size:14px; opacity:0; transition:.3s; z-index:50;
+    box-shadow:var(--shadow);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ===== App layout: sidebar + main ===== */
+  .app{ display:flex; min-height:100vh; }
+  .sidebar{
+    width:76px; flex-shrink:0; background:var(--bg-1); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; padding:16px 0 12px;
+    position:sticky; top:0; height:100vh; z-index:10;
+  }
+  .sidebar-logo{
+    width:44px; height:44px; border-radius:14px; margin-bottom:20px;
+    background:linear-gradient(135deg,var(--accent),var(--gold));
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+    box-shadow:0 6px 18px rgba(255,107,53,.35);
+  }
+  .sidebar-nav{ display:flex; flex-direction:column; gap:6px; width:100%; padding:0 6px; }
+  .nav-item{
+    border:none; background:transparent; color:var(--text-mute); cursor:pointer; font-family:inherit;
+    border-radius:12px; padding:10px 4px; display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:10px; font-weight:600; transition:.15s; width:100%;
+  }
+  .nav-item .ico{ font-size:20px; }
+  .nav-item:hover{ color:var(--text-dim); background:var(--bg-3); }
+  .nav-item.on{ background:var(--accent-soft); color:var(--accent-2); }
+  .main{ flex:1; min-width:0; }
+  .panel{ display:none; padding:20px 24px 60px; }
+  .panel.on{ display:block; }
+  .panel-inner{ max-width:860px; margin:0 auto; }
+
+  /* mobile: sidebar becomes bottom bar */
+  @media(max-width:768px){
+    .app{ flex-direction:column; }
+    .sidebar{
+      width:100%; height:auto; flex-direction:row; justify-content:space-around;
+      position:fixed; bottom:0; left:0; right:0; padding:8px 0 6px;
+      border-right:none; border-top:1px solid var(--line);
+      background:rgba(26,19,16,.96); backdrop-filter:blur(12px); z-index:100;
+    }
+    .sidebar-logo{ display:none; }
+    .sidebar-nav{ flex-direction:row; width:auto; padding:0; }
+    .nav-item{ padding:6px 12px; }
+    .panel{ padding:16px 16px 80px; }
+  }
+
+  /* ===== Coin flip panel ===== */
+  .coin-presets{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:20px; }
+  .coin-preset{
+    background:var(--bg-3); border:1px solid var(--line); color:var(--text-dim); border-radius:20px;
+    padding:7px 14px; font-size:13px; cursor:pointer; transition:.15s; white-space:nowrap; font-family:inherit;
+  }
+  .coin-preset:hover{ border-color:var(--accent); color:var(--text); background:var(--card-2); }
+  .coin-input-area{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; margin-bottom:20px; }
+  .coin-field{ margin-bottom:14px; }
+  .coin-field label{ display:block; font-size:12px; color:var(--text-dim); margin-bottom:6px; font-weight:600; }
+  .coin-field input{
+    width:100%; background:var(--bg-3); border:1px solid var(--line); color:var(--text); border-radius:10px;
+    padding:11px 14px; font-size:15px; font-family:inherit;
+  }
+  .coin-field input:focus{ outline:none; border-color:var(--accent); }
+  .coin-options-row{ display:flex; gap:12px; }
+  .coin-options-row .coin-field{ flex:1; margin-bottom:0; }
+  .coin-stage{ perspective:800px; display:flex; justify-content:center; align-items:center; height:200px; margin-bottom:16px; position:relative; }
+  .coin-3d{ width:150px; height:150px; position:relative; transform-style:preserve-3d; transition:transform 1.8s cubic-bezier(.22,.61,.36,1); }
+  .coin-3d.flipping{ animation:coinShake .12s ease-in-out 3; }
+  @keyframes coinShake{ 0%,100%{ margin-top:0 } 50%{ margin-top:-6px } }
+  .coin-face{ position:absolute; inset:0; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; backface-visibility:hidden; font-size:26px; font-weight:700; gap:4px; }
+  .coin-front{ background:linear-gradient(135deg,#ffd43b,#ffa500); color:#1a1a00; box-shadow:0 4px 30px rgba(255,212,59,.2),inset 0 2px 8px rgba(255,255,255,.3),inset 0 -2px 8px rgba(0,0,0,.1); }
+  .coin-back{ background:linear-gradient(135deg,#748ffc,#5c7cfa); color:#fff; transform:rotateY(180deg); box-shadow:0 4px 30px rgba(116,143,252,.2),inset 0 2px 8px rgba(255,255,255,.15),inset 0 -2px 8px rgba(0,0,0,.2); }
+  .coin-face .emoji{ font-size:40px; margin-bottom:2px; }
+  .coin-face .label{ font-size:22px; }
+  .coin-result{ text-align:center; min-height:60px; margin-bottom:20px; transition:.3s; }
+  .coin-result .verdict{ font-size:32px; font-weight:800; letter-spacing:1px; }
+  .coin-result .comment{ font-size:13px; color:var(--text-mute); margin-top:8px; }
+  .verdict.yes{ color:var(--gold); text-shadow:0 0 20px rgba(255,212,59,.3); }
+  .verdict.no{ color:#748ffc; text-shadow:0 0 20px rgba(116,143,252,.3); }
+  .btn-flip{
+    width:100%; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; border:none;
+    border-radius:14px; padding:16px; font-size:18px; font-weight:700; cursor:pointer; transition:.15s;
+    letter-spacing:1px; display:flex; align-items:center; justify-content:center; gap:8px; font-family:inherit;
+  }
+  .btn-flip:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+  .btn-flip:active{ transform:translateY(0); }
+  .btn-flip:disabled{ opacity:.5; cursor:not-allowed; transform:none; }
+  .coin-history{ margin-top:24px; }
+  .coin-history h3{ font-size:13px; color:var(--text-dim); margin-bottom:10px; font-weight:600; }
+  .coin-history-list{ display:flex; flex-direction:column; gap:8px; }
+  .coin-history-item{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:10px 14px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .coin-history-item .q{ color:var(--text-dim); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .coin-history-item .a{ font-weight:700; font-size:14px; white-space:nowrap; }
+  .coin-history-item .a.yes{ color:var(--gold); } .coin-history-item .a.no{ color:#748ffc; }
+  .coin-reset-link{ text-align:center; margin-top:12px; }
+  .coin-reset-link a{ color:var(--text-mute); font-size:13px; cursor:pointer; text-decoration:none; }
+  .coin-reset-link a:hover{ color:var(--text-dim); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">🍜</div>
+    <nav class="sidebar-nav">
+      <button class="nav-item on" data-tab="food" onclick="switchTab('food')"><span class="ico">🍜</span><span>吃什么</span></button>
+      <button class="nav-item" data-tab="brand" onclick="switchTab('brand')"><span class="ico">🎰</span><span>选品牌</span></button>
+      <button class="nav-item" data-tab="coin" onclick="switchTab('coin')"><span class="ico">🪙</span><span>扔硬币</span></button>
+    </nav>
+  </aside>
+  <main class="main">
+  <section class="panel on" id="panel-food">
+  <div class="panel-inner">
+  <div class="header">
+    <div class="brand">
+      <div class="logo">🍜</div>
+      <div>
+        <h1>今天吃啥</h1>
+        <div class="sub">选择困难症终结者 · 选个城市开吃</div>
+      </div>
+    </div>
+    <div class="top-controls">
+      <div class="city-sel">
+        <span class="ico">📍</span>
+        <select id="cityPicker">
+          <optgroup label="华东">
+            <option>上海</option><option>杭州</option><option>南京</option><option>苏州</option><option>宁波</option><option>无锡</option><option>合肥</option><option>济南</option><option>青岛</option><option>福州</option><option>厦门</option>
+          </optgroup>
+          <optgroup label="华北">
+            <option>北京</option><option>天津</option><option>石家庄</option><option>太原</option>
+          </optgroup>
+          <optgroup label="华南">
+            <option>广州</option><option>深圳</option><option>佛山</option><option>东莞</option><option>南宁</option><option>海口</option>
+          </optgroup>
+          <optgroup label="华中">
+            <option>武汉</option><option>长沙</option><option>郑州</option>
+          </optgroup>
+          <optgroup label="西南">
+            <option>成都</option><option>重庆</option><option>昆明</option><option>贵阳</option>
+          </optgroup>
+          <optgroup label="东北">
+            <option>沈阳</option><option>大连</option><option>哈尔滨</option><option>长春</option>
+          </optgroup>
+          <optgroup label="西北">
+            <option>西安</option><option>兰州</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="meal-tabs" id="mealTabs">
+        <button data-meal="早" class="on"><span class="ico">🌅</span>早餐</button>
+        <button data-meal="午"><span class="ico">☀️</span>午餐</button>
+        <button data-meal="晚"><span class="ico">🌙</span>晚餐</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter">
+    <div class="filter-bar" id="filterBar">
+      <span class="ttl">🏷️ 菜系筛选 · 当前 <b id="curCat">全部</b></span>
+      <span class="toggle" id="filterToggle">收起 ▴</span>
+    </div>
+    <div class="cat-pills" id="catPills"></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="card-wrap">
+      <div class="card" id="card">
+        <div class="face front" id="cardFront"></div>
+        <div class="face back" id="cardBack"></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="rollBtn">🎲 换一个</button>
+      <button class="btn btn-gold" id="lockBtn">✅ 就它了</button>
+      <button class="btn btn-ghost" id="weekBtn">📅 生成本周计划</button>
+    </div>
+  </div>
+
+  <div class="today">
+    <h3>今日已定</h3>
+    <div class="today-grid" id="todayGrid"></div>
+  </div>
+
+  <div class="week" id="weekBox" style="display:none;">
+    <div class="week-head">
+      <h3>📅 本周吃饭计划<span class="sub">点"重新生成"换一批</span></h3>
+      <button class="btn btn-ghost" id="reWeekBtn">🔄 重新生成</button>
+    </div>
+    <table id="weekTable"></table>
+  </div>
+
+  <div class="foot">
+    饭点是人生最重要的决定之一 · 别亏待自己的胃 🥢<br>
+    📍 高德看位置 · 🍱 点评看评价点外卖 · 大众点评个别城市可能需手动切换定位
+  </div>
+  </div>
+  </section>
+  <section class="panel" id="panel-brand">
+  <div class="panel-inner">
+  <div class="brand-zone">
+    <h3>🎲 随机品牌<span class="sub">选个品类,转盘替你选牌子</span></h3>
+    <div class="brand-cats" id="brandCats"></div>
+    <div class="wheel-stage" id="wheelStage">
+      <div class="wheel-hint" id="wheelHint">👆 先选个品类，再转盘子</div>
+      <div class="wheel-box" id="wheelBox" style="display:none;">
+        <div class="wheel-pointer"></div>
+        <svg class="wheel-svg" id="wheelSvg" viewBox="0 0 400 400"></svg>
+        <button class="wheel-center" id="wheelStart" onclick="spinWheel()">
+          GO
+          <span class="small">开始</span>
+        </button>
+      </div>
+      <div class="wheel-result" id="wheelResult">
+        <div class="b-emoji" id="wrEmoji"></div>
+        <div class="b-name" id="wrName"></div>
+        <div class="b-tag" id="wrTag"></div>
+        <div class="b-slogan" id="wrSlogan"></div>
+        <div class="brand-links" id="brandLinks"></div>
+        <button class="wheel-spin-again" onclick="spinWheel()">🔄 再转一次</button>
+      </div>
+    </div>
+  </div>
+
+  </div>
+  </section>
+  <section class="panel" id="panel-coin">
+  <div class="panel-inner">
+    <div class="coin-header" style="text-align:center;margin-bottom:24px;">
+      <h2 style="font-size:20px;font-weight:700;">🎯 选择困难症救星</h2>
+      <div style="font-size:13px;color:var(--text-mute);margin-top:6px;">想不了？交给命运</div>
+    </div>
+    <div class="coin-presets" id="coinPresets"></div>
+    <div class="coin-input-area">
+      <div class="coin-field">
+        <label>你的问题是？</label>
+        <input type="text" id="coinQuestion" placeholder="比如：今天喝咖啡？" maxlength="50">
+      </div>
+      <div class="coin-options-row">
+        <div class="coin-field">
+          <label>选项 A</label>
+          <input type="text" id="coinOptA" value="喝" maxlength="8">
+        </div>
+        <div class="coin-field">
+          <label>选项 B</label>
+          <input type="text" id="coinOptB" value="不喝" maxlength="8">
+        </div>
+      </div>
+    </div>
+    <div class="coin-stage">
+      <div class="coin-3d" id="coin">
+        <div class="coin-face coin-front" id="coinFront">
+          <span class="emoji">🪙</span>
+          <span class="label" id="coinLabelA">喝</span>
+        </div>
+        <div class="coin-face coin-back" id="coinBack">
+          <span class="emoji">🪙</span>
+          <span class="label" id="coinLabelB">不喝</span>
+        </div>
+      </div>
+    </div>
+    <div class="coin-result" id="coinResult">
+      <div class="comment">点下面按钮，让硬币替你决定</div>
+    </div>
+    <button class="btn-flip" id="flipBtn" onclick="flipCoin()">🪙 抛硬币决定</button>
+    <div class="coin-history" id="coinHistorySection" style="display:none">
+      <h3>📜 决定记录</h3>
+      <div class="coin-history-list" id="coinHistoryList"></div>
+      <div class="coin-reset-link"><a onclick="clearCoinHistory()">清空记录</a></div>
+    </div>
+  </div>
+  </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DISHES = [
+  {n:"豆浆油条",e:"🥖",c:"早餐",d:"国民CP,经典永流传",cal:"~450大卡",shop:"桃园眷村",scope:"national"},
+  {n:"小笼包",e:"🥟",c:"早餐",d:"皮薄汁多,小心烫嘴",cal:"~280大卡",shop:"南翔馒头店",scope:"local"},
+  {n:"煎饼果子",e:"🫓",c:"早餐",d:"加了薄脆才正宗",cal:"~520大卡",shop:"煎饼道",scope:"local"},
+  {n:"肠粉",e:"🍤",c:"早餐",d:"布拉肠,滑嫩鲜香",cal:"~300大卡",shop:"银记肠粉王",scope:"local"},
+  {n:"皮蛋瘦肉粥",e:"🥣",c:"早餐",d:"暖胃,慢熬出米油",cal:"~250大卡",shop:"真粥道",scope:"local"},
+  {n:"手抓饼",e:"🫓",c:"早餐",d:"层层酥脆,加蛋加肠",cal:"~480大卡",shop:"粮全其美",scope:"national"},
+  {n:"胡辣汤",e:"🌶️",c:"早餐",d:"中原硬核早餐",cal:"~320大卡",shop:"方中山胡辣汤",scope:"national"},
+  {n:"肉夹馍",e:"🌮",c:"早餐",d:"腊汁肉夹馍,肥而不腻",cal:"~430大卡",shop:"魏家凉皮",scope:"national"},
+  {n:"热干面",e:"🍜",c:"早餐",d:"芝麻酱裹满,武汉魂",cal:"~520大卡",shop:"蔡林记",scope:"national"},
+  {n:"生煎包",e:"🥟",c:"早餐",d:"底脆汁多,趁热吃",cal:"~300大卡",shop:"小杨生煎",scope:"local"},
+  {n:"葱油拌面",e:"🍜",c:"早餐",d:"葱香四溢,简单满足",cal:"~420大卡",shop:"沧浪亭",scope:"local"},
+  {n:"鸡蛋灌饼",e:"🫓",c:"早餐",d:"街头能量站",cal:"~380大卡",shop:"山东杂粮煎饼",scope:"national"},
+
+  {n:"麻婆豆腐",e:"🌶️",c:"川菜",d:"麻辣鲜香,下饭神器",cal:"~350大卡",shop:"陈麻婆豆腐",scope:"local"},
+  {n:"回锅肉",e:"🥩",c:"川菜",d:"肥而不腻,下饭天花板",cal:"~520大卡",shop:"俏江南",scope:"national"},
+  {n:"宫保鸡丁",e:"🍗",c:"川菜",d:"糊辣荔枝口,经典",cal:"~400大卡",shop:"蜀菜行",scope:"local"},
+  {n:"水煮鱼",e:"🐟",c:"川菜",d:"麻辣鲜嫩,满盆红油",cal:"~480大卡",shop:"沸腾鱼乡",scope:"national"},
+  {n:"辣子鸡",e:"🌶️",c:"川菜",d:"在辣椒堆里找鸡块",cal:"~460大卡",shop:"蜀地辣子鸡",scope:"local"},
+  {n:"毛血旺",e:"🍲",c:"川菜",d:"重口解馋,汤汁都香",cal:"~540大卡",shop:"重庆老灶",scope:"local"},
+
+  {n:"白切鸡",e:"🍗",c:"粤菜",d:"皮爽肉滑,蘸姜葱",cal:"~320大卡",shop:"广州酒家",scope:"local"},
+  {n:"烧鹅饭",e:"🍚",c:"粤菜",d:"脆皮多汁,例牌必点",cal:"~560大卡",shop:"利苑酒家",scope:"national"},
+  {n:"煲仔饭",e:"🍚",c:"粤菜",d:"锅巴才是灵魂",cal:"~520大卡",shop:"超记煲仔饭",scope:"local"},
+  {n:"虾饺",e:"🥟",c:"粤菜",d:"一盅两件,晶莹剔透",cal:"~260大卡",shop:"避风塘",scope:"national"},
+  {n:"豉汁排骨",e:"🍖",c:"粤菜",d:"蒸到脱骨,咸香",cal:"~420大卡",shop:"利苑酒家",scope:"national"},
+
+  {n:"剁椒鱼头",e:"🐟",c:"湘菜",d:"鲜辣开胃,拌面绝配",cal:"~380大卡",shop:"湘鄂情",scope:"national"},
+  {n:"小炒肉",e:"🥩",c:"湘菜",d:"辣椒炒肉,干饭必备",cal:"~450大卡",shop:"湘院子",scope:"local"},
+  {n:"口味虾",e:"🦞",c:"湘菜",d:"夜宵顶流,嗦到停不下",cal:"~400大卡",shop:"沪小胖小龙虾",scope:"local"},
+
+  {n:"锅包肉",e:"🍖",c:"东北",d:"酸甜酥脆,一口上头",cal:"~520大卡",shop:"东北人",scope:"local"},
+  {n:"地三鲜",e:"🥔",c:"东北",d:"土豆茄子青椒,下饭",cal:"~380大卡",shop:"东北人",scope:"local"},
+  {n:"小鸡炖蘑菇",e:"🍄",c:"东北",d:"东北硬菜代表",cal:"~420大卡",shop:"东北人",scope:"local"},
+
+  {n:"东坡肉",e:"🥩",c:"江浙",d:"软糯红亮,入口即化",cal:"~560大卡",shop:"苏浙汇",scope:"national"},
+  {n:"糖醋排骨",e:"🍖",c:"江浙",d:"酸甜适中,老少通吃",cal:"~460大卡",shop:"绿波廊",scope:"local"},
+  {n:"龙井虾仁",e:"🦐",c:"江浙",d:"茶香清雅,杭帮名菜",cal:"~280大卡",shop:"知味观",scope:"local"},
+
+  {n:"西红柿炒蛋",e:"🍅",c:"家常",d:"永远的神,拌饭一绝",cal:"~260大卡",shop:"上海老饭店",scope:"local"},
+  {n:"可乐鸡翅",e:"🍗",c:"家常",d:"甜香入味,零失败",cal:"~380大卡",shop:"老吉士",scope:"local"},
+  {n:"红烧肉",e:"🥩",c:"家常",d:"家家户户的执念",cal:"~540大卡",shop:"茂隆",scope:"local"},
+  {n:"土豆丝",e:"🥔",c:"家常",d:"酸辣脆爽,国民配菜",cal:"~220大卡",shop:"老吉士",scope:"local"},
+  {n:"蒜蓉空心菜",e:"🥬",c:"家常",d:"翠绿清香,解腻",cal:"~150大卡",shop:"老吉士",scope:"local"},
+
+  {n:"兰州拉面",e:"🍜",c:"面食",d:"一清二白三红四绿",cal:"~480大卡",shop:"东方宫兰州拉面",scope:"national"},
+  {n:"油泼面",e:"🍜",c:"面食",d:"宽面热油,香到跺脚",cal:"~520大卡",shop:"西贝莜面村",scope:"national"},
+  {n:"刀削面",e:"🍜",c:"面食",d:"中厚边薄,筋道",cal:"~460大卡",shop:"老晋面馆",scope:"local"},
+  {n:"biangbiang面",e:"🍜",c:"面食",d:"裤带面,油泼辣子",cal:"~560大卡",shop:"西贝莜面村",scope:"national"},
+
+  {n:"重庆火锅",e:"🍲",c:"火锅",d:"九宫格牛油,麻辣鲜香",cal:"~700大卡",shop:"大龙燚",scope:"national"},
+  {n:"潮汕牛肉火锅",e:"🥩",c:"火锅",d:"现切鲜牛,清汤本味",cal:"~550大卡",shop:"八合里海记",scope:"national"},
+  {n:"韩式烤肉",e:"🍖",c:"烤肉",d:"五花肉配生菜,快乐",cal:"~620大卡",shop:"汉拿山",scope:"national"},
+  {n:"日式烧肉",e:"🥩",c:"烤肉",d:"和牛寿喜,精致派",cal:"~580大卡",shop:"牛角烧肉",scope:"national"},
+
+  {n:"牛排",e:"🥩",c:"西餐",d:"五分熟刚刚好",cal:"~520大卡",shop:"王品牛排",scope:"national"},
+  {n:"意面",e:"🍝",c:"西餐",d:"番茄肉酱,经典款",cal:"~480大卡",shop:"萨莉亚",scope:"national"},
+  {n:"披萨",e:"🍕",c:"西餐",d:"芝士拉丝的快乐",cal:"~600大卡",shop:"必胜客",scope:"national"},
+  {n:"汉堡",e:"🍔",c:"西餐",d:"双层吉士,简单粗暴",cal:"~550大卡",shop:"Shake Shack",scope:"national"},
+
+  {n:"寿司定食",e:"🍣",c:"日料",d:"清新精致,赏味",cal:"~420大卡",shop:"争鲜回转寿司",scope:"national"},
+  {n:"豚骨拉面",e:"🍜",c:"日料",d:"浓厚白汤,溏心蛋",cal:"~520大卡",shop:"一兰拉面",scope:"local"},
+  {n:"鳗鱼饭",e:"🍱",c:"日料",d:"酱汁浓郁,肥美",cal:"~560大卡",shop:"赤阪亭",scope:"national"},
+
+  {n:"黄焖鸡米饭",e:"🍗",c:"快餐",d:"街头三巨头之一",cal:"~520大卡",shop:"杨铭宇黄焖鸡",scope:"national"},
+  {n:"麻辣烫",e:"🍲",c:"快餐",d:"自选食材,灵魂麻酱",cal:"~450大卡",shop:"杨国福麻辣烫",scope:"national"},
+  {n:"螺蛳粉",e:"🍜",c:"快餐",d:"爱之入骨,恨之捂鼻",cal:"~480大卡",shop:"欢螺螺蛳粉",scope:"local"},
+  {n:"沙县拌面",e:"🍜",c:"快餐",d:"花生酱拌开,配炖罐",cal:"~380大卡",shop:"沙县小吃",scope:"national"},
+  {n:"麦当劳",e:"🍔",c:"快餐",d:"穷鬼套餐,稳稳的",cal:"~500大卡",shop:"麦当劳",scope:"national"},
+  {n:"兰州炒饭",e:"🍚",c:"快餐",d:"粒粒分明,管饱",cal:"~520大卡",shop:"兰州拉面馆",scope:"national"},
+  {n:"肯德基",e:"🍗",c:"快餐",d:"疯狂星期四,冲冲冲",cal:"~550大卡",shop:"肯德基",scope:"national"},
+  {n:"塔斯汀",e:"🍔",c:"快餐",d:"中国汉堡,现烤饼皮",cal:"~420大卡",shop:"塔斯汀中国汉堡",scope:"national"},
+  {n:"盖浇饭",e:"🍚",c:"快餐",d:"菜浇饭上,管饱管好",cal:"~500大卡",shop:"真功夫",scope:"national"},
+  {n:"炒饭",e:"🍚",c:"快餐",d:"蛋炒饭,最简单最满足",cal:"~480大卡",shop:"扬州炒饭",scope:"national"},
+
+  {n:"夫妻肺片",e:"🥩",c:"川菜",d:"麻辣鲜香,凉菜之王",cal:"~320大卡",shop:"巴国布衣",scope:"national"},
+  {n:"棒棒鸡",e:"🍗",c:"川菜",d:"手撕鸡丝,麻辣鲜香",cal:"~300大卡",shop:"廖记棒棒鸡",scope:"national"},
+  {n:"酸辣粉",e:"🍜",c:"川菜",d:"嗦粉快乐,酸辣过瘾",cal:"~420大卡",shop:"好又来酸辣粉",scope:"national"},
+  {n:"龙抄手",e:"🥟",c:"川菜",d:"皮薄馅嫩,红油浇头",cal:"~380大卡",shop:"龙抄手",scope:"national"},
+  {n:"甜水面",e:"🍜",c:"川菜",d:"粗面甜辣,成都味道",cal:"~450大卡",shop:"洞子口张老二",scope:"national"},
+  {n:"口水鸡",e:"🍗",c:"川菜",d:"麻辣红油,鲜嫩多汁",cal:"~320大卡",shop:"椒也川菜",scope:"national"},
+  {n:"泡椒牛蛙",e:"🐸",c:"川菜",d:"鲜嫩弹牙,泡椒够劲",cal:"~380大卡",shop:"哥老官美蛙鱼头",scope:"national"},
+  {n:"干煸四季豆",e:"🫛",c:"川菜",d:"煸到起皱,咸香入味",cal:"~220大卡",shop:"蜀菜行",scope:"local"},
+  {n:"水煮牛肉",e:"🥩",c:"川菜",d:"麻辣嫩滑,汤汁拌饭",cal:"~500大卡",shop:"蜀地辣子鸡",scope:"local"},
+
+  {n:"干炒牛河",e:"🍜",c:"粤菜",d:"镬气十足,牛肉嫩滑",cal:"~520大卡",shop:"合记茶餐厅",scope:"national"},
+  {n:"叉烧饭",e:"🍚",c:"粤菜",d:"蜜汁叉烧,甜咸交融",cal:"~580大卡",shop:"翠华餐厅",scope:"national"},
+  {n:"云吞面",e:"🍜",c:"粤菜",d:"汤鲜面爽,云吞饱满",cal:"~380大卡",shop:"麦奀云吞面",scope:"national"},
+  {n:"脆皮烧肉",e:"🥩",c:"粤菜",d:"皮脆肉嫩,蘸白糖",cal:"~450大卡",shop:"明炉烧腊",scope:"national"},
+  {n:"豉油鸡",e:"🍗",c:"粤菜",d:"酱色油亮,鸡肉嫩滑",cal:"~380大卡",shop:"清平鸡饭店",scope:"national"},
+  {n:"凤爪",e:"🐔",c:"粤菜",d:"先炸后蒸,一吮脱骨",cal:"~200大卡",shop:"点都德",scope:"national"},
+  {n:"牛腩河粉",e:"🍜",c:"粤菜",d:"牛腩软烂,河粉滑嫩",cal:"~480大卡",shop:"越华记",scope:"national"},
+
+  {n:"擂辣椒皮蛋",e:"🫑",c:"湘菜",d:"擂到融合,香辣过瘾",cal:"~180大卡",shop:"笨萝卜浏阳菜馆",scope:"national"},
+  {n:"常德牛肉粉",e:"🍜",c:"湘菜",d:"汤浓粉滑,牛肉大块",cal:"~480大卡",shop:"常德津市牛肉粉",scope:"national"},
+  {n:"湘西腊肉",e:"🥩",c:"湘菜",d:"烟熏咸香,配笋绝了",cal:"~420大卡",shop:"湘西风味馆",scope:"national"},
+  {n:"血粑鸭",e:"🦆",c:"湘菜",d:"湘西名菜,咸香微辣",cal:"~400大卡",shop:"湘院子",scope:"local"},
+  {n:"农家小炒肉",e:"🥩",c:"湘菜",d:"土猪肉配螺丝椒",cal:"~430大卡",shop:"炊烟小炒黄牛肉",scope:"national"},
+
+  {n:"酸菜白肉",e:"🥬",c:"东北",d:"酸鲜开胃,血肠必备",cal:"~450大卡",shop:"东北饺子王",scope:"local"},
+  {n:"酱骨架",e:"🦴",c:"东北",d:"大口啃骨,豪爽过瘾",cal:"~500大卡",shop:"东北王",scope:"local"},
+  {n:"拔丝地瓜",e:"🍠",c:"东北",d:"糖丝拉长,甜蜜满足",cal:"~380大卡",shop:"东北人",scope:"local"},
+  {n:"五彩大拉皮",e:"🍜",c:"东北",d:"Q弹爽滑,麻酱灵魂",cal:"~250大卡",shop:"东北人",scope:"local"},
+  {n:"铁锅炖",e:"🍲",c:"东北",d:"大铁锅炖鱼炖鹅,硬核",cal:"~600大卡",shop:"铁锅炖鱼村",scope:"national"},
+
+  {n:"西湖醋鱼",e:"🐟",c:"江浙",d:"酸甜鲜嫩,杭帮代表",cal:"~320大卡",shop:"楼外楼",scope:"national"},
+  {n:"叫化鸡",e:"🍗",c:"江浙",d:"泥裹烘烤,酥烂脱骨",cal:"~480大卡",shop:"楼外楼",scope:"national"},
+  {n:"宁波汤圆",e:"⚪",c:"江浙",d:"猪油芝麻馅,流心",cal:"~300大卡",shop:"缸鸭狗",scope:"national"},
+  {n:"无锡排骨",e:"🍖",c:"江浙",d:"甜咸交融,骨酥肉烂",cal:"~420大卡",shop:"三凤桥肉庄",scope:"national"},
+  {n:"盐水鸭",e:"🦆",c:"江浙",d:"皮薄肉嫩,金陵味道",cal:"~280大卡",shop:"韩复兴",scope:"national"},
+  {n:"蟹粉小笼",e:"🥟",c:"江浙",d:"蟹黄满溢,鲜到眉毛",cal:"~350大卡",shop:"王家沙",scope:"local"},
+  {n:"雪菜黄鱼",e:"🐟",c:"江浙",d:"咸鲜合一,汤浓味美",cal:"~320大卡",shop:"老正兴",scope:"local"},
+
+  {n:"干锅花菜",e:"🥦",c:"家常",d:"干香入味,下饭利器",cal:"~280大卡",shop:"蜀地",scope:"national"},
+  {n:"虎皮青椒",e:"🫑",c:"家常",d:"皮皱味入,微辣回甘",cal:"~180大卡",shop:"湘菜馆",scope:"national"},
+  {n:"肉末茄子",e:"🍆",c:"家常",d:"茄子吸味,肉末增香",cal:"~340大卡",shop:"上海老饭店",scope:"local"},
+  {n:"蒜苔炒肉",e:"🥩",c:"家常",d:"脆嫩鲜香,家常味道",cal:"~360大卡",shop:"家常菜馆",scope:"national"},
+  {n:"蚝油生菜",e:"🥬",c:"家常",d:"爽脆鲜甜,10秒出锅",cal:"~120大卡",shop:"老吉士",scope:"local"},
+
+  {n:"重庆小面",e:"🍜",c:"面食",d:"麻辣鲜香,一碗入魂",cal:"~420大卡",shop:"呼啦面馆",scope:"national"},
+  {n:"臊子面",e:"🍜",c:"面食",d:"酸辣鲜香,岐山风味",cal:"~440大卡",shop:"宝鸡面皮",scope:"national"},
+  {n:"炸酱面",e:"🍜",c:"面食",d:"黄酱肉丁,北京味",cal:"~480大卡",shop:"海碗居",scope:"national"},
+  {n:"阳春面",e:"🍜",c:"面食",d:"清汤素面,鲜咸适口",cal:"~360大卡",shop:"沧浪亭",scope:"local"},
+  {n:"片儿川",e:"🍜",c:"面食",d:"雪菜笋肉,杭帮面代表",cal:"~420大卡",shop:"奎元馆",scope:"national"},
+  {n:"铁锅焖面",e:"🍜",c:"面食",d:"豆角排骨焖出一锅香",cal:"~500大卡",shop:"铁锅焖面",scope:"national"},
+  {n:"牛肉板面",e:"🍜",c:"面食",d:"安徽名面,宽面劲道",cal:"~460大卡",shop:"太和牛肉板面",scope:"national"},
+  {n:"车仔面",e:"🍜",c:"面食",d:"港式街头面,配料自选",cal:"~400大卡",shop:"翠华餐厅",scope:"national"},
+
+  {n:"老北京铜锅",e:"🍲",c:"火锅",d:"清汤涮肉,麻酱灵魂",cal:"~600大卡",shop:"东来顺",scope:"national"},
+  {n:"花胶鸡火锅",e:"🍲",c:"火锅",d:"浓汤花胶,养生暖胃",cal:"~520大卡",shop:"花胶鸡火锅",scope:"national"},
+  {n:"椰子鸡火锅",e:"🍲",c:"火锅",d:"清甜椰汁,鸡肉鲜嫩",cal:"~480大卡",shop:"四季椰林",scope:"national"},
+  {n:"羊蝎子火锅",e:"🍖",c:"火锅",d:"酱香浓郁,啃骨吸髓",cal:"~580大卡",shop:"满恒记",scope:"national"},
+
+  {n:"东北烤肉",e:"🍖",c:"烤肉",d:"大块肉配酸菜,豪放",cal:"~600大卡",shop:"东北烤肉",scope:"national"},
+  {n:"巴西烤肉",e:"🥩",c:"烤肉",d:"自助大肉,吃到扶墙",cal:"~700大卡",shop:"拉巴巴西烤肉",scope:"national"},
+
+  {n:"炸鸡",e:"🍗",c:"西餐",d:"外脆多汁,快乐源泉",cal:"~500大卡",shop:"Popeyes",scope:"national"},
+  {n:"三明治",e:"🥪",c:"西餐",d:"料足层多,简餐首选",cal:"~380大卡",shop:"Subway",scope:"national"},
+  {n:"墨西哥卷",e:"🌯",c:"西餐",d:"料满味足,一口大满足",cal:"~450大卡",shop:"塔可钟",scope:"national"},
+  {n:"烤鸡",e:"🍗",c:"西餐",d:"皮脆肉嫩,香草入味",cal:"~420大卡",shop:"Nando's",scope:"national"},
+
+  {n:"天妇罗",e:"🍤",c:"日料",d:"酥脆不腻,蘸萝卜泥",cal:"~420大卡",shop:"天吉",scope:"national"},
+  {n:"日式炸鸡",e:"🍗",c:"日料",d:"多汁鲜嫩,配蛋黄酱",cal:"~480大卡",shop:"鸟贵族",scope:"national"},
+  {n:"咖喱饭",e:"🍛",c:"日料",d:"浓郁咖喱,拌饭一绝",cal:"~520大卡",shop:"CoCo壹番屋",scope:"national"},
+  {n:"章鱼烧",e:"🐙",c:"日料",d:"外脆内软,木鱼花飘",cal:"~280大卡",shop:"大阪烧肉",scope:"national"},
+  {n:"亲子丼",e:"🍚",c:"日料",d:"滑嫩鸡蛋裹鸡肉,治愈",cal:"~480大卡",shop:"食其家",scope:"national"},
+
+  {n:"羊肉串",e:"🍢",c:"烧烤",d:"炭火烤,孜然辣椒",cal:"~380大卡",shop:"很久以前羊肉串",scope:"national"},
+  {n:"烤生蚝",e:"🦪",c:"烧烤",d:"蒜蓉粉丝,鲜到爆",cal:"~200大卡",shop:"湛江烤蚝",scope:"national"},
+  {n:"烤鱼",e:"🐟",c:"烧烤",d:"先烤后炖,麻辣鲜香",cal:"~550大卡",shop:"探鱼",scope:"national"},
+  {n:"烤茄子",e:"🍆",c:"烧烤",d:"蒜蓉铺满,软糯入味",cal:"~180大卡",shop:"丰茂烤串",scope:"national"},
+  {n:"锡纸花甲",e:"🦪",c:"烧烤",d:"粉丝蒜蓉,鲜味全锁",cal:"~220大卡",shop:"花甲先生",scope:"national"},
+  {n:"烤鸡翅",e:"🍗",c:"烧烤",d:"皮脆肉嫩,蜜汁微甜",cal:"~280大卡",shop:"丰茂烤串",scope:"national"},
+  {n:"烤韭菜",e:"🌿",c:"烧烤",d:"男人加油站,懂的都懂",cal:"~150大卡",shop:"东北烧烤",scope:"national"},
+
+  {n:"冬阴功汤",e:"🍲",c:"东南亚",d:"酸辣鲜香,一口入魂",cal:"~280大卡",shop:"蕉叶",scope:"national"},
+  {n:"泰式奶茶",e:"🧋",c:"东南亚",d:"橘色浓郁,甜到心",cal:"~320大卡",shop:"泰谣",scope:"national"},
+  {n:"越南河粉",e:"🍜",c:"东南亚",d:"清汤鲜甜,加青柠",cal:"~380大卡",shop:"美奈小馆",scope:"national"},
+  {n:"咖喱蟹",e:"🦀",c:"东南亚",d:"咖喱裹蟹,拌饭一绝",cal:"~480大卡",shop:"蕉叶",scope:"national"},
+  {n:"青木瓜沙拉",e:"🥗",c:"东南亚",d:"酸辣清爽,开胃前菜",cal:"~180大卡",shop:"素攀",scope:"national"},
+  {n:"海南鸡饭",e:"🍚",c:"东南亚",d:"滑嫩鸡肉,鸡油饭",cal:"~450大卡",shop:"五星海南鸡饭",scope:"national"},
+  {n:"肉骨茶",e:"🍖",c:"东南亚",d:"药材炖骨,暖身暖胃",cal:"~380大卡",shop:"松发肉骨茶",scope:"national"},
+  {n:"娘惹糕",e:"🍰",c:"东南亚",d:"椰香斑斓,色彩缤纷",cal:"~220大卡",shop:"娘惹厨房",scope:"national"},
+
+  {n:"部队锅",e:"🍲",c:"韩餐",d:"泡菜午餐肉,一锅乱炖",cal:"~550大卡",shop:"姜虎东白丁",scope:"national"},
+  {n:"石锅拌饭",e:"🍚",c:"韩餐",d:"拌一切,锅巴脆",cal:"~480大卡",shop:"全州拌饭",scope:"national"},
+  {n:"韩式炸鸡",e:"🍗",c:"韩餐",d:"甜辣酱裹,配啤酒",cal:"~520大卡",shop:"bbq比比客",scope:"national"},
+  {n:"泡菜汤",e:"🍲",c:"韩餐",d:"酸辣暖胃,配米饭",cal:"~350大卡",shop:"本家韩国料理",scope:"national"},
+  {n:"大酱汤",e:"🍲",c:"韩餐",d:"豆酱浓郁,豆腐嫩",cal:"~280大卡",shop:"本家韩国料理",scope:"national"},
+  {n:"春川炒鸡",e:"🍗",c:"韩餐",d:"辣酱鸡块,配芝士",cal:"~480大卡",shop:"春川炒鸡",scope:"national"},
+  {n:"韩式冷面",e:"🍜",c:"韩餐",d:"冰汤冷面,酸甜清爽",cal:"~380大卡",shop:"平壤冷面馆",scope:"national"},
+
+  {n:"臭豆腐",e:"🟤",c:"小吃",d:"闻着臭吃着香,经典",cal:"~280大卡",shop:"黑色经典臭豆腐",scope:"national"},
+  {n:"烤冷面",e:"🍜",c:"小吃",d:"东北街头,酸甜辣",cal:"~320大卡",shop:"东北烤冷面",scope:"national"},
+  {n:"铁板鱿鱼",e:"🦑",c:"小吃",d:"铁板滋滋,酱香Q弹",cal:"~220大卡",shop:"海鲜大排档",scope:"national"},
+  {n:"炸串",e:"🍢",c:"小吃",d:"万物皆可炸,蘸酱",cal:"~380大卡",shop:"夸父炸串",scope:"national"},
+  {n:"烤面筋",e:"🍢",c:"小吃",d:"孜然辣椒,一串接一串",cal:"~180大卡",shop:"街头烤面筋",scope:"national"},
+  {n:"糖葫芦",e:"🍡",c:"小吃",d:"冰糖山楂,酸甜嘎嘣",cal:"~200大卡",shop:"老北京糖葫芦",scope:"national"},
+  {n:"鸡蛋仔",e:"🧇",c:"小吃",d:"外脆内软,港式经典",cal:"~300大卡",shop:"利强记",scope:"national"},
+  {n:"章鱼小丸子",e:"🐙",c:"小吃",d:"外脆内软,木鱼花舞",cal:"~260大卡",shop:"章鱼小丸子",scope:"national"},
+  {n:"淀粉肠",e:"🌭",c:"小吃",d:"街头顶流,炸到开花",cal:"~200大卡",shop:"路边摊",scope:"national"},
+  {n:"狼牙土豆",e:"🥔",c:"小吃",d:"波浪土豆,麻辣鲜香",cal:"~280大卡",shop:"四川小吃",scope:"national"},
+
+  {n:"珍珠奶茶",e:"🧋",c:"甜品",d:"Q弹珍珠,快乐源泉",cal:"~380大卡",shop:"喜茶",scope:"national"},
+  {n:"杨枝甘露",e:"🥭",c:"甜品",d:"芒果西米,港式经典",cal:"~280大卡",shop:"满记甜品",scope:"national"},
+  {n:"双皮奶",e:"🥛",c:"甜品",d:"奶香嫩滑,顺德味道",cal:"~220大卡",shop:"仁信双皮奶",scope:"national"},
+  {n:"芒果班戟",e:"🥭",c:"甜品",d:"奶油芒果卷,港式",cal:"~320大卡",shop:"满记甜品",scope:"national"},
+  {n:"蛋挞",e:"🥧",c:"甜品",d:"酥皮蛋液,葡式经典",cal:"~260大卡",shop:"玛嘉烈蛋挞",scope:"national"},
+  {n:"椰汁西米露",e:"🥥",c:"甜品",d:"清甜爽口,夏日解暑",cal:"~200大卡",shop:"许留山",scope:"national"},
+  {n:"姜撞奶",e:"🥛",c:"甜品",d:"姜辣撞奶,暖胃",cal:"~180大卡",shop:"南信牛奶甜品",scope:"national"},
+  {n:"冰粉",e:"🧊",c:"甜品",d:"冰凉爽滑,红糖水灵魂",cal:"~150大卡",shop:"冰粉先生",scope:"national"},
+  {n:"龟苓膏",e:"🖤",c:"甜品",d:"微苦回甘,清热降火",cal:"~120大卡",shop:"海天堂",scope:"national"},
+  {n:"舒芙蕾",e:"🍰",c:"甜品",d:"蓬松空气感,趁热吃",cal:"~380大卡",shop:"Umile舒芙蕾",scope:"national"},
+
+  {n:"轻食沙拉",e:"🥗",c:"轻食",d:"鸡胸牛油果,减脂标配",cal:"~280大卡",shop:"Wagas沃歌斯",scope:"national"},
+  {n:"波奇碗",e:"🥙",c:"轻食",d:"夏威夷风,三文鱼牛油果",cal:"~350大卡",shop:"Poke Bowl",scope:"national"},
+  {n:"鸡胸肉沙拉",e:"🥗",c:"轻食",d:"低脂高蛋白,健身餐",cal:"~250大卡",shop:"甜心摇滚沙拉",scope:"national"},
+  {n:"牛油果三明治",e:"🥪",c:"轻食",d:"全麦面包,健康饱腹",cal:"~320大卡",shop:"Subway",scope:"national"},
+  {n:"藜麦饭",e:"🍚",c:"轻食",d:"低GI主食,营养满分",cal:"~300大卡",shop:"Wagas沃歌斯",scope:"national"},
+  {n:"酸奶碗",e:"🥛",c:"轻食",d:"希腊酸奶加坚果水果",cal:"~220大卡",shop:"乐纯酸奶",scope:"national"},
+
+  {n:"清蒸大闸蟹",e:"🦀",c:"海鲜",d:"秋季顶流,蟹黄蟹膏",cal:"~200大卡",shop:"王宝和大酒店",scope:"local"},
+  {n:"蒜蓉粉丝蒸扇贝",e:"🐚",c:"海鲜",d:"粉丝吸汁,蒜蓉鲜香",cal:"~180大卡",shop:"海鲜大排档",scope:"national"},
+  {n:"椒盐皮皮虾",e:"🦐",c:"海鲜",d:"椒盐酥脆,嗦到手指",cal:"~280大卡",shop:"海鲜市场",scope:"national"},
+  {n:"白灼虾",e:"🦐",c:"海鲜",d:"原汁原味,蘸酱油",cal:"~180大卡",shop:"老山东饺子楼",scope:"national"},
+  {n:"葱姜炒蟹",e:"🦀",c:"海鲜",d:"葱姜爆香,蟹鲜入味",cal:"~350大卡",shop:"新荣记",scope:"national"},
+  {n:"蒜蓉烤生蚝",e:"🦪",c:"海鲜",d:"蒜蓉粉丝,鲜到爆表",cal:"~200大卡",shop:"湛江烤蚝",scope:"national"},
+
+  {n:"大盘鸡",e:"🍗",c:"新疆",d:"鸡肉土豆宽面,一盘够三人",cal:"~580大卡",shop:"新疆风味餐厅",scope:"national"},
+  {n:"烤馕",e:"🫓",c:"新疆",d:"炭火烤饼,配烤串绝",cal:"~280大卡",shop:"新疆饭庄",scope:"national"},
+  {n:"手抓饭",e:"🍚",c:"新疆",d:"羊肉胡萝卜焖饭,油润",cal:"~520大卡",shop:"新疆风味餐厅",scope:"national"},
+  {n:"新疆炒米粉",e:"🍜",c:"新疆",d:"新疆炒米粉,辣酱裹满",cal:"~480大卡",shop:"吴佳炒米粉",scope:"national"},
+  {n:"酿皮子",e:"🍜",c:"新疆",d:"面皮筋道,麻辣酸香",cal:"~320大卡",shop:"新疆小吃",scope:"national"},
+  {n:"丁丁炒面",e:"🍜",c:"新疆",d:"面丁肉丁,大火爆炒",cal:"~460大卡",shop:"新疆饭庄",scope:"national"},
+  {n:"羊肉汤",e:"🍲",c:"新疆",d:"清汤羊肉,暖身暖胃",cal:"~280大卡",shop:"新疆风味餐厅",scope:"national"},
+
+  {n:"过桥米线",e:"🍜",c:"云南",d:"滚汤现烫,配料丰富",cal:"~450大卡",shop:"桥香园",scope:"national"},
+  {n:"汽锅鸡",e:"🍗",c:"云南",d:"蒸汽慢炖,汤清肉嫩",cal:"~380大卡",shop:"云南印象",scope:"national"},
+  {n:"菌子火锅",e:"🍄",c:"云南",d:"野生菌鲜,时令限定",cal:"~480大卡",shop:"菌临天下",scope:"national"},
+  {n:"鲜花饼",e:"🌸",c:"云南",d:"玫瑰花瓣馅,酥香微甜",cal:"~220大卡",shop:"嘉华鲜花饼",scope:"national"},
+  {n:"砂锅米线",e:"🍜",c:"云南",d:"砂锅焖煮,汤浓入味",cal:"~420大卡",shop:"云南米线馆",scope:"national"},
+  {n:"木瓜鸡",e:"🍗",c:"云南",d:"酸木瓜炖鸡,酸鲜开胃",cal:"~380大卡",shop:"云南印象",scope:"national"},
+
+  {n:"沙茶面",e:"🍜",c:"闽台",d:"沙茶汤底,料足鲜浓",cal:"~420大卡",shop:"沙茶面馆",scope:"national"},
+  {n:"姜母鸭",e:"🦆",c:"闽台",d:"姜香鸭烂,泉州名菜",cal:"~450大卡",shop:"闽南姜母鸭",scope:"national"},
+  {n:"海蛎煎",e:"🦪",c:"闽台",d:"蚵仔煎,外脆内嫩",cal:"~280大卡",shop:"台南担仔面",scope:"national"},
+  {n:"卤肉饭",e:"🍚",c:"闽台",d:"肉躁浇饭,台湾味道",cal:"~480大卡",shop:"鹿港小镇",scope:"national"},
+  {n:"台湾牛肉面",e:"🍜",c:"闽台",d:"红烧牛腩,台湾顶流",cal:"~500大卡",shop:"鼎泰丰",scope:"national"},
+  {n:"蚵仔煎",e:"🦪",c:"闽台",d:"地瓜粉蛋煎,甜辣酱",cal:"~260大卡",shop:"台湾小吃",scope:"national"},
+  {n:"盐酥鸡",e:"🍗",c:"闽台",d:"酥脆咸香,九层塔灵魂",cal:"~320大卡",shop:"台湾盐酥鸡",scope:"national"},
+];
+
+let state = { meal:"早", cat:"全部", city:"上海", current:null, today:{早:null,午:null,晚:null} };
+const MEAL_LABEL = {早:"早餐",午:"午餐",晚:"晚餐"};
+
+/* 大众点评城市ID（华东华北等36城） */
+const DP_CITY = {上海:1,北京:2,杭州:3,广州:4,南京:5,天津:6,深圳:7,成都:8,重庆:9,青岛:10,沈阳:11,苏州:12,西安:13,武汉:14,长沙:15,大连:16,宁波:17,济南:18,哈尔滨:19,无锡:20,厦门:21,福州:22,长春:23,郑州:24,昆明:25,合肥:26,南昌:27,太原:28,南宁:29,石家庄:30,贵阳:31,兰州:32,东莞:33,佛山:34,海口:35};
+
+function searchQuery(d){
+  if(state.city==="上海" || d.scope==="national") return d.shop;
+  return d.n;
+}
+function displayShop(d){
+  if(state.city==="上海" || d.scope==="national") return d.shop;
+  return `找附近"${d.n}"`;
+}
+function mapLink(q){
+  return `https://www.amap.com/search?query=${encodeURIComponent(q)}&city=${encodeURIComponent(state.city)}`;
+}
+function dpLink(d){
+  const id = DP_CITY[state.city] || 1;
+  return `https://www.dianping.com/search/keyword/${id}/0_${encodeURIComponent(searchQuery(d))}`;
+}
+
+function dishesForContext(){
+  let list = DISHES.slice();
+  if(state.cat!=="全部") list = list.filter(d=>d.c===state.cat);
+  if(state.meal==="早"){
+    list = list.filter(d=>d.c==="早餐");
+    if(list.length===0) list = DISHES.filter(d=>d.c==="早餐");
+  }else{
+    list = list.filter(d=>d.c!=="早餐");
+    if(list.length===0) list = DISHES.filter(d=>d.c!=="早餐");
+  }
+  return list;
+}
+
+document.getElementById("cityPicker").onchange = e=>{
+  state.city = e.target.value;
+  toast(`📍 已切换到 ${state.city}`);
+  refreshAll();
+};
+function refreshAll(){
+  document.getElementById("curCat").textContent = state.cat;
+  if(state.current) renderCard(state.current); else resetCard();
+  renderToday();
+  if(document.getElementById("weekBox").style.display!=="none") genWeek();
+}
+
+let filterOpen = true;
+function renderCats(){
+  const counts = {"全部":DISHES.length};
+  DISHES.forEach(d=>counts[d.c]=(counts[d.c]||0)+1);
+  const order = ["早餐","川菜","粤菜","湘菜","东北","江浙","家常","面食","火锅","烤肉","西餐","日料","快餐","烧烤","东南亚","韩餐","小吃","甜品","轻食","海鲜","新疆","云南","闽台"];
+  const cats = ["全部",...order.filter(c=>counts[c])];
+  document.getElementById("catPills").innerHTML = cats.map(c=>
+    `<button class="pill ${c===state.cat?'on':''}" data-cat="${c}">${c}<span class="cnt">${counts[c]}</span></button>`
+  ).join("");
+  document.getElementById("catPills").querySelectorAll(".pill").forEach(el=>{
+    el.onclick=()=>{ state.cat=el.dataset.cat; renderCats(); resetCard(); };
+  });
+  document.getElementById("curCat").textContent=state.cat;
+}
+document.getElementById("filterBar").onclick=()=>{
+  filterOpen=!filterOpen;
+  document.getElementById("catPills").classList.toggle("hidden",!filterOpen);
+  document.getElementById("filterToggle").innerHTML = filterOpen?"收起 ▴":"展开 ▾";
+};
+
+document.getElementById("mealTabs").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  state.meal=b.dataset.meal;
+  document.querySelectorAll("#mealTabs button").forEach(x=>x.classList.toggle("on",x===b));
+  resetCard();
+  renderToday();
+});
+
+function pick(){
+  const pool = dishesForContext();
+  if(pool.length===0) return null;
+  let tries=0, d;
+  do{ d=pool[Math.floor(Math.random()*pool.length)]; tries++; }
+  while(state.current && d.n===state.current.n && tries<8 && pool.length>1);
+  return d;
+}
+function renderCard(d){
+  if(!d){
+    document.getElementById("cardFront").innerHTML = `
+      <div class="dish-emoji">🤔</div>
+      <div class="dish-name">暂无菜品</div>
+      <div class="dish-desc">当前筛选下没有菜<br>换一个菜系试试</div>`;
+    return;
+  }
+  const shopHtml = d.shop ? `
+    <div class="shop-actions">
+      <a class="shop-link amap" href="${mapLink(searchQuery(d))}" target="_blank" rel="noopener">📍 ${displayShop(d)} ↗</a>
+      <a class="shop-link dp" href="${dpLink(d)}" target="_blank" rel="noopener">🍱 点评/外卖 ↗</a>
+    </div>` : "";
+  document.getElementById("cardBack").innerHTML = `
+    <div class="dish-emoji">${d.e}</div>
+    <div class="dish-name">${d.n}</div>
+    <div class="dish-cat">${d.c} · ${MEAL_LABEL[state.meal]}</div>
+    <div class="dish-desc">${d.desc||""}</div>
+    <div class="dish-meta"><span>${d.cal||""}</span></div>
+    ${shopHtml}`;
+}
+function resetCard(){
+  state.current=null;
+  document.getElementById("cardFront").innerHTML = `
+    <div class="dish-emoji">🍽️</div>
+    <div class="dish-name">点"换一个"</div>
+    <div class="dish-desc">从${state.cat==="全部"?"全部菜系":state.cat}里随机抽一道<br>${MEAL_LABEL[state.meal]}时段 · ${state.city}</div>`;
+}
+function flipRoll(d){
+  const card=document.getElementById("card");
+  renderCard(d);
+  card.classList.remove("flip");
+  void card.offsetWidth;
+  card.classList.add("flip");
+}
+document.getElementById("rollBtn").onclick=()=>{
+  const d=pick();
+  if(!d){ toast("当前没有可选的菜,换换筛选"); return; }
+  state.current=d; flipRoll(d);
+};
+document.getElementById("lockBtn").onclick=()=>{
+  if(!state.current){ toast('先点"换一个"抽一道菜'); return; }
+  state.today[state.meal]=state.current;
+  renderToday();
+  toast(`✅ ${MEAL_LABEL[state.meal]}已定：${state.current.n}`);
+};
+
+function renderToday(){
+  const box=document.getElementById("todayGrid");
+  box.innerHTML=["早","午","晚"].map(m=>{
+    const d=state.today[m]; const set=!!d;
+    const shopTxt = (set&&d.shop) ? displayShop(d) : "";
+    return `<div class="today-cell ${set?'set':'empty'}" data-meal="${m}">
+      <div class="lbl">${MEAL_LABEL[m]}</div>
+      <div class="nm">${set?`${d.e} ${d.n}`:"未定"}</div>
+      ${shopTxt?`<div class="sub-shop" title="${shopTxt}">📍 ${shopTxt}</div>`:""}
+      ${set?`<span class="clr" data-meal="${m}">✕</span>`:""}
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".clr").forEach(x=>x.onclick=ev=>{ ev.stopPropagation(); state.today[x.dataset.meal]=null; renderToday(); });
+  box.querySelectorAll(".today-cell").forEach(c=>{ c.onclick=()=>{
+    state.meal=c.dataset.meal;
+    document.querySelectorAll("#mealTabs button").forEach(b=>b.classList.toggle("on",b.dataset.meal===state.meal));
+    resetCard();
+  };});
+}
+
+const WEEK_DAYS=["周一","周二","周三","周四","周五","周六","周日"];
+function pickFromCat(c){ const p=DISHES.filter(d=>d.c===c); return p[Math.floor(Math.random()*p.length)]; }
+function pickFromNonBreakfast(){ const p=DISHES.filter(d=>d.c!=="早餐"); return p[Math.floor(Math.random()*p.length)]; }
+function genWeek(){
+  let html="<thead><tr><th>日期</th><th>🌅 早餐</th><th>☀️ 午餐</th><th>🌙 晚餐</th></tr></thead><tbody>";
+  WEEK_DAYS.forEach(day=>{
+    const b=pickFromCat("早餐"), l=pickFromNonBreakfast(), d=pickFromNonBreakfast();
+    const cell = x => `<span class="em">${x.e}</span>${x.n}<a class="wk-shop" href="${dpLink(x)}" target="_blank" rel="noopener" title="去大众点评">🍱 ${displayShop(x)}</a>`;
+    html+=`<tr><td>${day}</td><td>${cell(b)}</td><td>${cell(l)}</td><td>${cell(d)}</td></tr>`;
+  });
+  html+="</tbody>";
+  document.getElementById("weekTable").innerHTML=html;
+  document.getElementById("weekBox").style.display="block";
+}
+document.getElementById("weekBtn").onclick=genWeek;
+document.getElementById("reWeekBtn").onclick=genWeek;
+
+let toastTimer;
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* ============ 随机品牌 ============ */
+const BRANDS = {
+  "奶茶":{
+    emoji:"🧋",items:[
+      {n:"茉莉奶白",t:"茉莉花茶,清香不腻",s:"东方茉莉,一杯入魂"},
+      {n:"喜茶",t:"芝士奶盖开创者",s:"灵感之茶,中国制造"},
+      {n:"奈雪的茶",t:"一口好茶,一口软欧包",s:"美好自有力量"},
+      {n:"茶百道",t:"杨枝甘露经典",s:"好茶好料好味道"},
+      {n:"霸王茶姬",t:"伯牙绝弦,鲜奶茶天花板",s:"东方新茶饮"},
+      {n:"蜜雪冰城",t:"3块钱的快乐",s:"你爱我我爱你蜜雪冰城甜蜜蜜"},
+      {n:"古茗",t:"古茗奶茶,好喝不贵",s:"每天一杯喝不腻"},
+      {n:"一点点",t:"波霸奶茶,配料自选",s:"好茶好料好心情"},
+      {n:"茶颜悦色",t:"长沙限定,幽兰拿铁",s:"越中国越时尚"},
+      {n:"乐乐茶",t:"草莓桃桃酪酪",s:"快乐制茶"},
+      {n:"书亦烧仙草",t:"烧仙草,半杯料",s:"书亦烧仙草,半杯都是料"},
+      {n:"沪上阿姨",t:"血糯米奶茶",s:"现煮五谷茶"},
+      {n:"7分甜",t:"杨枝甘露鼻祖",s:"7分甜刚刚好"},
+      {n:"甜啦啦",t:"鲜果茶,平价之选",s:"好喝不贵甜啦啦"},
+      {n:"COCO都可",t:"奶茶三兄弟",s:"新鲜好喝每一杯"},
+      {n:"阿嬷手作",t:"手作米麻薯",s:"慢工出细活"},
+      {n:"茶理宜世",t:"岭南鲜茶饮",s:"一口茶一口诗"},
+      {n:"恋茶",t:"鲜奶茶,轻负担",s:"好茶不怕巷子深"},
+      {n:"爷爷不泡茶",t:"荔枝冰酿,非遗米酿,舒淇代言",s:"花开茶自香"},
+      {n:"益禾堂",t:"烤奶鼻祖,平价之光",s:"一杯好茶,益杯好心情"},
+      {n:"快乐番薯",t:"芋圆奶茶,台式风味",s:"快乐就这么简单"},
+      {n:"泰柯茶园",t:"泰式咸法酪,闪电黑马",s:"一杯泰奶,一座城"},
+      {n:"李茶的茶",t:"福建原叶茶,北京排队王",s:"必喝茶饮"},
+      {n:"吉事桔香茶",t:"桔茶专门店,上海现象级",s:"一桔多用,月销4万杯"},
+      {n:"麦吉machi machi",t:"周杰伦同款,台式奶茶",s:" machi machi"},
+    ]
+  },
+  "咖啡":{
+    emoji:"☕",items:[
+      {n:"瑞幸",t:"9.9一杯,打工续命",s:"这一杯,谁不爱"},
+      {n:"星巴克",t:"第三空间,社畜避风港",s:"不是在星巴克就是在去星巴克的路上"},
+      {n:"Manner",t:"自带杯减5元",s:"让咖啡成为生活的一部分"},
+      {n:"Tims天好咖啡",t:"甜甜圈配咖啡",s:"加拿大国民咖啡"},
+      {n:"%Arabica",t:"日式精品,拍照打卡",s:"See the world through coffee"},
+      {n:"M Stand",t:"燕麦曲奇拿铁",s:"更多可能性"},
+      {n:"Seesaw",t:"创意特调,本地咖啡",s:"好咖啡不止一面"},
+      {n:"Peet's皮爷咖啡",t:"深烘咖啡鼻祖",s:"咖啡界的祖师爷"},
+      {n:"麦咖啡",t:"麦当劳早餐搭档",s:"醒来就喝麦咖啡"},
+      {n:"库迪咖啡",t:"8.8一杯,卷王之王",s:"任何时间任何地点库迪咖啡认真干活"},
+      {n:"Grid Coffee",t:"全黑咖啡,装X利器",s:"专注单一产地"},
+      {n:"M Stand",t:"西式咖啡,网红店",s:"不定义不盲从"},
+      {n:"肯悦咖啡",t:"肯德基旗下,气泡咖啡",s:"创意气泡专家"},
+      {n:"幸运咖",t:"蜜雪冰城旗下,5元美式",s:"好咖啡其实不贵"},
+      {n:"挪瓦咖啡",t:"果咖赛道,万店品牌",s:"好豆子好果子好咖啡"},
+      {n:"比星咖啡",t:"意式精品,新锐品牌",s:"星星之咖啡"},
+      {n:"四叶咖",t:"云南咖啡,本土风味",s:"幸运四叶草"},
+      {n:"马路咖啡",t:"WBC亚军坐镇,精品天花板",s:"品味风土密码"},
+    ]
+  },
+  "汉堡":{
+    emoji:"🍔",items:[
+      {n:"麦当劳",t:"穷鬼套餐,1+1=13.9",s:"i'm lovin' it"},
+      {n:"肯德基",t:"疯狂星期四,V我50",s:"生活好滋味"},
+      {n:"汉堡王",t:"皇堡是真的大",s:"味道好,玩得花"},
+      {n:"Shake Shack",t:"美式汉堡天花板",s:"Stand for something good"},
+      {n:"华莱士",t:"实惠大份,中国汉堡",s:"一样的汉堡不一样的价格"},
+      {n:"塔斯汀",t:"中国汉堡,现烤饼皮",s:"就是中国胃就吃中国堡"},
+      {n:"Five Guys",t:"花生随便吃",s:"只为做出最好的汉堡"},
+      {n:"Carl's Jr.卡乐星",t:"大份厚实,够劲",s:"吃硬核的"},
+      {n:"派乐汉堡",t:"性价比之选",s:"快乐随心"},
+      {n:"快乐星汉堡",t:"平价汉堡,管饱",s:"快乐每一口"},
+      {n:"享哆味",t:"下沉市场炸鸡汉堡",s:"好吃好味好实惠"},
+      {n:"虎头炸",t:"潮汕炸鸡,新锐品牌",s:"虎虎生威"},
+      {n:"牛约堡",t:"手作牛肉汉堡",s:"真材实料好汉堡"},
+      {n:"赛百味",t:"三明治潜艇堡,健康轻食",s:"Eat Fresh"},
+    ]
+  },
+  "炸鸡":{
+    emoji:"🍗",items:[
+      {n:"Popeyes",t:"美式炸鸡,脆皮多汁",s:"Louisiana Fast"},
+      {n:"正新鸡排",t:"街头鸡排,大份实惠",s:"正新鸡排,味道好"},
+      {n:"叫了个炸鸡",t:"外卖炸鸡,整只的",s:"叫了个炸鸡满足你的胃"},
+      {n:"延庆观炸鸡",t:"河南老字号",s:"百年传承好味道"},
+      {n:"德克士",t:"脆皮炸鸡,皮脆肉嫩",s:"脆皮炸鸡就选德克士"},
+      {n:"BFC霸王鸡排",t:"超大鸡排,够吃",s:"够大够脆够味"},
+      {n:"肯德基",t:"原味鸡,吮指原味",s:"吮指回味,乐在其中"},
+      {n:"麦当劳",t:"麦麦脆汁鸡",s:"i'm lovin' it"},
+      {n:"派派思",t:"美式炸鸡,蘸酱灵魂",s:"Cajun风味"},
+      {n:"桥头排骨",t:"炸排骨,酥脆入味",s:"骨头都香"},
+      {n:"慕百味轰炸鸡",t:"整鸡轰炸,多汁鲜嫩",s:"层层把关好味道"},
+      {n:"超级鸡车",t:"台式鸡排,脆皮多汁",s:"很机车很美味"},
+    ]
+  },
+  "披萨":{
+    emoji:"🍕",items:[
+      {n:"必胜客",t:"铁盘披萨,芝士拉丝",s:"Pizza and more"},
+      {n:"达美乐",t:"30分钟必达",s:"Oh yes we did"},
+      {n:"棒约翰",t:"更好的馅料更好的披萨",s:"Better ingredients"},
+      {n:"尊宝披萨",t:"大尺寸,性价比高",s:"好披萨不贵"},
+      {n:"乐凯撒",t:"榴莲披萨开创者",s:"只做更好吃的披萨"},
+      {n:"比格披萨",t:"自助披萨,吃到扶墙",s:"欢乐自助"},
+      {n:"Pizza Marzano",t:"意式薄底,精致",s:"正宗那不勒斯"},
+      {n:"萨莉亚",t:"意式餐厅,便宜大碗",s:"意式美食平价享受"},
+    ]
+  },
+  "火锅":{
+    emoji:"🍲",items:[
+      {n:"海底捞",t:"服务好到社恐",s:"好火锅自己会说话"},
+      {n:"巴奴毛肚火锅",t:"毛肚七上八下",s:"越懂火锅越爱巴奴"},
+      {n:"哥老官",t:"美蛙鱼头,牛蛙必点",s:"美蛙鱼头火锅"},
+      {n:"凑凑火锅",t:"台式火锅,鸭血豆腐",s:"为美好相聚"},
+      {n:"小龙坎",t:"成都牛油,麻辣鲜香",s:"过把瘾就走"},
+      {n:"蜀大侠",t:"武侠风火锅,龙头锅",s:"一锅江湖"},
+      {n:"捞王",t:"胡椒猪肚鸡,养生锅",s:"用心煲好汤"},
+      {n:"大龙燚",t:"成都老火锅,够辣",s:"让世界爱上成都味"},
+      {n:"贤合庄",t:"明星火锅,卤味特色",s:"卤味火锅"},
+      {n:"怂火锅",t:"年轻潮流,跳舞服务",s:"开心就好"},
+      {n:"呷哺呷哺",t:"一人一锅,时尚小火锅",s:"小火锅大品牌"},
+      {n:"朱光玉火锅馆",t:"重庆老火锅,2026十强",s:"一口入魂"},
+      {n:"熊喵来了火锅",t:"萌系IP火锅,年轻人最爱",s:"可爱的火锅"},
+    ]
+  },
+  "烤肉":{
+    emoji:"🍖",items:[
+      {n:"汉拿山",t:"韩式烤肉,五花肉必点",s:"正宗韩式烤肉"},
+      {n:"丰茂烤串",t:"现穿羊肉串,炭火烤",s:"丰茂烤串,自然好味道"},
+      {n:"很久以前羊肉串",t:"只卖羊肉串,品质为王",s:"只是家羊肉串"},
+      {n:"九田家",t:"日式烤肉,黑毛和牛",s:"极致烤肉体验"},
+      {n:"权金城",t:"韩式烤肉,老品牌",s:"正宗韩式料理"},
+      {n:"姜虎东白丁",t:"韩国综艺同款,氛围好",s:"678烤肉"},
+      {n:"东北烤肉",t:"大块肉配酸菜,豪放",s:"东北味儿"},
+      {n:"牛角烧肉",t:"日式烧肉,和牛品质",s:"认真烤好每一块肉"},
+      {n:"西塔老太太",t:"泥炉烤肉,朝鲜族风味",s:"沈阳排队王"},
+      {n:"韩宫宴",t:"韩式烤肉,宫廷风",s:"宫廷级烤肉体验"},
+      {n:"安又胖韩国烤肉",t:"自助韩式烤肉,大口吃肉",s:"吃到扶墙出"},
+    ]
+  },
+  "粉面":{
+    emoji:"🍜",items:[
+      {n:"和府捞面",t:"书房里的面,汤浓",s:"书房里养心,面碗中养身"},
+      {n:"遇见小面",t:"重庆小面,豌杂面",s:"一碗小面,一座城"},
+      {n:"陈香贵",t:"兰州牛肉面,现拉",s:"传承百年经典"},
+      {n:"马记永",t:"兰州拉面,连锁品牌",s:"一碗面一座城"},
+      {n:"张拉拉",t:"手撕牛肉面",s:"好面好汤好牛肉"},
+      {n:"味千拉面",t:"日式拉面,骨汤",s:"一碗拉面的力量"},
+      {n:"呼啦面馆",t:"重庆小面,豌杂",s:"面要呼啦吃"},
+      {n:"东方宫",t:"兰州牛肉面,正宗",s:"一清二白三红四绿"},
+      {n:"常德津市牛肉粉",t:"湖南米粉,汤浓粉滑",s:"一碗粉一座城"},
+      {n:"李先生牛肉面",t:"加州牛肉面大王",s:"经典味道"},
+      {n:"老碗会",t:"陕西手工面,biangbiang面",s:"一碗面一座城"},
+      {n:"醉面",t:"重庆小面,豌杂面专门店",s:"醉在一碗面"},
+      {n:"蔡林记",t:"武汉热干面,芝麻酱灵魂",s:"武汉人的早餐"},
+    ]
+  },
+  "快餐":{
+    emoji:"🥡",items:[
+      {n:"老乡鸡",t:"肥西老母鸡汤",s:"全国800家直营店"},
+      {n:"真功夫",t:"营养还是蒸的好",s:"蒸出好味道"},
+      {n:"乡村基",t:"川味快餐,实惠",s:"好吃不贵"},
+      {n:"永和大王",t:"豆浆油条,中式快餐",s:"用心做好每一餐"},
+      {n:"吉野家",t:"牛肉饭,日式快餐",s:"好吃,快吃"},
+      {n:"食其家",t:"牛丼饭,日式简餐",s:"量多味美"},
+      {n:"丽华快餐",t:"外卖快餐,团餐",s:"快餐也可以很讲究"},
+      {n:"老娘舅",t:"中式快餐,招牌排骨",s:"好米饭好味道"},
+      {n:"谷田稻香",t:"瓦锅饭,现炒浇头",s:"现炒才好吃"},
+      {n:"大娘水饺",t:"水饺快餐,实惠",s:"好吃不过饺子"},
+      {n:"米村拌饭",t:"石锅拌饭,朝鲜族风味",s:"拌饭专门店"},
+      {n:"大米先生",t:"中式快餐,现炒浇头",s:"好饭好菜好味道"},
+      {n:"南城香",t:"北京早餐之王,盖饭烧麦",s:"北京人的食堂"},
+      {n:"超意兴",t:"把子肉快餐,山东味道",s:"济南老字号"},
+    ]
+  },
+  "便利店":{
+    emoji:"🏪",items:[
+      {n:"全家",t:"便当饭团,关东煮",s:"全家就是你家"},
+      {n:"罗森",t:"甜点面包,便当",s:"让顾客便利"},
+      {n:"7-11",t:"便当饭团,咖啡",s:"always open"},
+      {n:"便利蜂",t:"热餐便当,自选",s:"随时随地便利蜂"},
+      {n:"喜士多",t:"日常便利,鲜食",s:"贴心好邻居"},
+      {n:"美宜佳",t:"广东便利店之王",s:"用心服务"},
+      {n:"好德",t:"上海本地便利店",s:"方便好德"},
+      {n:"良友金伴",t:"上海老牌便利店",s:"好邻居好朋友"},
+    ]
+  },
+};
+
+let brandCat = null;
+let brandCurrent = null;
+let wheelAngle = -90;
+let wheelSpinning = false;
+
+function renderBrandCats(){
+  const keys = Object.keys(BRANDS);
+  document.getElementById("brandCats").innerHTML = keys.map(k=>{
+    const b = BRANDS[k];
+    return `<button class="brand-cat ${k===brandCat?'on':''}" data-cat="${k}">${b.emoji} ${k}</button>`;
+  }).join("");
+  document.getElementById("brandCats").querySelectorAll(".brand-cat").forEach(el=>{
+    el.onclick=()=>{
+      brandCat = el.dataset.cat;
+      brandCurrent = null;
+      renderBrandCats();
+      renderWheel();
+    };
+  });
+}
+
+function renderWheel(){
+  const hint = document.getElementById("wheelHint");
+  const box = document.getElementById("wheelBox");
+  const result = document.getElementById("wheelResult");
+  if(!brandCat){
+    hint.style.display="block"; box.style.display="none"; result.classList.remove("show");
+    return;
+  }
+  hint.style.display="none"; box.style.display="block"; result.classList.remove("show");
+
+  const items = BRANDS[brandCat].items;
+  const n = items.length;
+  const sector = 360 / n;
+  const r = 180;
+  const cx = 200, cy = 200;
+  let svg = '';
+
+  items.forEach((b,i)=>{
+    const start = i * sector;
+    const end = start + sector;
+    const rad1 = start * Math.PI / 180;
+    const rad2 = end * Math.PI / 180;
+    const x1 = cx + r * Math.cos(rad1);
+    const y1 = cy + r * Math.sin(rad1);
+    const x2 = cx + r * Math.cos(rad2);
+    const y2 = cy + r * Math.sin(rad2);
+    const largeArc = sector > 180 ? 1 : 0;
+
+    // hue spread across warm palette, skipping muddy browns
+    const hue = (i / n) * 360;
+    const color = `hsl(${hue} 78% ${i%2===0?52:46}%)`;
+
+    // label position and rotation
+    const mid = start + sector/2;
+    const midRad = mid * Math.PI / 180;
+    const labelR = n > 16 ? 118 : (n > 10 ? 128 : 138);
+    const lx = cx + labelR * Math.cos(midRad);
+    const ly = cy + labelR * Math.sin(midRad);
+    // keep text readable: rotate so it points outward from center
+    const textRot = mid;
+    const shortName = b.n.length > 4 ? b.n.slice(0,3) + (b.n.length>3?'…':'') : b.n;
+    const fontSize = n > 18 ? 9 : (n > 12 ? 10 : 12);
+
+    svg += `<path class="wheel-sector" d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${color}"></path>`;
+    svg += `<text class="wheel-text" x="${lx}" y="${ly}" transform="rotate(${textRot} ${lx} ${ly})" font-size="${fontSize}">${shortName}</text>`;
+  });
+
+  document.getElementById("wheelSvg").innerHTML = svg;
+  wheelAngle = -90;
+  document.getElementById("wheelSvg").style.transform = `rotate(${wheelAngle}deg)`;
+  document.getElementById("wheelSvg").classList.remove("spinning");
+}
+
+function spinWheel(){
+  if(wheelSpinning || !brandCat) return;
+  const items = BRANDS[brandCat].items;
+  if(items.length === 0) return;
+
+  wheelSpinning = true;
+  document.getElementById("wheelStart").disabled = true;
+  document.getElementById("wheelResult").classList.remove("show");
+
+  // pick winner
+  const idx = Math.floor(Math.random() * items.length);
+  const n = items.length;
+  const sector = 360 / n;
+  const targetMid = idx * sector + sector/2;
+
+  // spin at least 5 rounds, land on target
+  const rounds = 5 + Math.floor(Math.random() * 3);
+  // Correct alignment: SVG rotate(X) puts math-angle A at visual position A+X.
+  // Pointer is at top (-90deg). We need: targetMid + X = -90 (mod 360).
+  // So target X = -90 - targetMid. Compute delta from current position.
+  const targetMod = ((-90 - targetMid) % 360 + 360) % 360;
+  const currentMod = ((wheelAngle % 360) + 360) % 360;
+  let delta = targetMod - currentMod;
+  if(delta < 0) delta += 360;
+  wheelAngle = wheelAngle + 360 * rounds + delta;
+
+  const svg = document.getElementById("wheelSvg");
+  svg.classList.add("spinning");
+  // force reflow
+  void svg.offsetWidth;
+  svg.style.transform = `rotate(${wheelAngle}deg)`;
+
+  setTimeout(()=>{
+    wheelSpinning = false;
+    document.getElementById("wheelStart").disabled = false;
+    brandCurrent = items[idx];
+    showBrandResult(brandCurrent);
+  }, 4600);
+}
+
+function showBrandResult(b){
+  const emoji = BRANDS[brandCat].emoji;
+  document.getElementById("wrEmoji").textContent = emoji;
+  document.getElementById("wrName").textContent = b.n;
+  document.getElementById("wrTag").textContent = b.t;
+  document.getElementById("wrSlogan").textContent = `「${b.s}」`;
+
+  const linksEl = document.getElementById("brandLinks");
+  const query = encodeURIComponent(b.n);
+  linksEl.innerHTML = `
+    <a class="shop-link amap" href="https://www.amap.com/search?query=${query}&city=${encodeURIComponent(state.city)}" target="_blank" rel="noopener">📍 附近搜索 ↗</a>
+    <a class="shop-link dp" href="https://www.dianping.com/search/keyword/${DP_CITY[state.city]||1}/0_${query}" target="_blank" rel="noopener">🍱 点评/外卖 ↗</a>
+  `;
+
+  document.getElementById("wheelResult").classList.add("show");
+}
+
+
+/* ============ Tab Switching ============ */
+function switchTab(tab){
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.classList.toggle('on', el.dataset.tab===tab);
+  });
+  document.querySelectorAll('.panel').forEach(el=>{
+    el.classList.toggle('on', el.id==='panel-'+tab);
+  });
+  // re-render wheel when switching to brand tab
+  if(tab==='brand' && brandCat) renderWheel();
+  // scroll to top
+  window.scrollTo(0,0);
+}
+
+/* ============ Coin Flip ============ */
+const COIN_PRESETS=[
+  {q:"今天喝咖啡？",a:"喝",b:"不喝",emoji:"☕"},
+  {q:"喝奶茶吗？",a:"喝",b:"不喝",emoji:"🧋"},
+  {q:"点外卖吗？",a:"点",b:"不点",emoji:"🍱"},
+  {q:"去运动吗？",a:"去",b:"不去",emoji:"🏃"},
+  {q:"今晚熬夜？",a:"熬",b:"睡",emoji:"🌙"},
+  {q:"这个东西买不买？",a:"买",b:"不买",emoji:"🛒"},
+  {q:"要不要发消息？",a:"发",b:"不发",emoji:"💬"},
+  {q:"今天出门吗？",a:"出",b:"不出",emoji:"🚪"},
+];
+const COIN_COMMENTS={
+  yes:["命运说你该 ✊","天意如此，别纠结了","硬币都说了，干就完了","宇宙站你这边","今天的运气在这了","命运安排好了，去吧"],
+  no:["命运劝你冷静 🙅","天意说：算了","硬币说不，听话","今天的运势：克制","命运替你省了一笔","宇宙说：今天不行"]
+};
+let coinFlipping=false;
+let coinRotation=0;
+let coinHistory=[];
+try{const h=localStorage.getItem("pp_decisions");if(h)coinHistory=JSON.parse(h);}catch(e){}
+
+function initCoin(){
+  const pc=document.getElementById("coinPresets");
+  pc.innerHTML=COIN_PRESETS.map(p=>`<div class="coin-preset" onclick="applyCoinPreset('${p.q}','${p.a}','${p.b}')">${p.emoji} ${p.q}</div>`).join("");
+  updateCoinLabels();
+  renderCoinHistory();
+}
+function applyCoinPreset(q,a,b){
+  document.getElementById("coinQuestion").value=q;
+  document.getElementById("coinOptA").value=a;
+  document.getElementById("coinOptB").value=b;
+  updateCoinLabels();
+}
+function updateCoinLabels(){
+  const a=document.getElementById("coinOptA").value||"A";
+  const b=document.getElementById("coinOptB").value||"B";
+  document.getElementById("coinLabelA").textContent=a;
+  document.getElementById("coinLabelB").textContent=b;
+}
+document.addEventListener("input",function(e){
+  if(e.target.id==="coinOptA"||e.target.id==="coinOptB") updateCoinLabels();
+});
+function flipCoin(){
+  if(coinFlipping)return;
+  const q=document.getElementById("coinQuestion").value.trim();
+  if(!q){toast("先写个问题呀");return;}
+  const a=document.getElementById("coinOptA").value.trim()||"A";
+  const b=document.getElementById("coinOptB").value.trim()||"B";
+  coinFlipping=true;
+  const btn=document.getElementById("flipBtn");
+  btn.disabled=true;
+  const coin=document.getElementById("coin");
+  coin.classList.add("flipping");
+  const pick=Math.random()<0.5?0:1;
+  const spins=5+Math.floor(Math.random()*3);
+  const targetOffset=pick===0?0:180;
+  coinRotation+=spins*360+((targetOffset-(coinRotation%360))+360)%360;
+  coin.style.transform=`rotateY(${coinRotation}deg)`;
+  document.getElementById("coinResult").innerHTML='<div class="comment" style="font-size:18px">🪙 硬币飞起来了...</div>';
+  setTimeout(()=>{
+    coin.classList.remove("flipping");
+    const result=document.getElementById("coinResult");
+    const isYes=pick===0;
+    const comment=COIN_COMMENTS[isYes?"yes":"no"][Math.floor(Math.random()*6)];
+    result.innerHTML=`<div class="verdict ${isYes?"yes":"no"}">${isYes?a:b}</div><div class="comment">${comment}</div>`;
+    coinHistory.unshift({q,a,b,answer:isYes?a:b,isYes,time:new Date().toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})});
+    if(coinHistory.length>20)coinHistory=coinHistory.slice(0,20);
+    try{localStorage.setItem("pp_decisions",JSON.stringify(coinHistory));}catch(e){}
+    renderCoinHistory();
+    coinFlipping=false;
+    btn.disabled=false;
+    btn.textContent="🪙 再来一次";
+  },1800);
+}
+function renderCoinHistory(){
+  const sec=document.getElementById("coinHistorySection");
+  const list=document.getElementById("coinHistoryList");
+  if(!coinHistory.length){sec.style.display="none";return;}
+  sec.style.display="block";
+  list.innerHTML=coinHistory.map(h=>`<div class="coin-history-item"><span class="q">${h.q} → <b style="color:var(--text)">${h.answer}</b></span><span class="a ${h.isYes?"yes":"no"}" style="font-size:11px">${h.time}</span></div>`).join("");
+}
+function clearCoinHistory(){
+  if(!coinHistory.length)return;
+  if(!confirm("清空所有决定记录？"))return;
+  coinHistory=[];try{localStorage.removeItem("pp_decisions");}catch(e){}
+  renderCoinHistory();toast("已清空");
+}
+
+renderCats(); resetCard(); renderToday(); renderBrandCats(); initCoin();
+</script>
+</body>
+</html>
