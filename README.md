@@ -1,2 +1,4 @@
-# Pingping-09.github.io
-平平的工作台合集
+# 平平的工作台
+
+- index.html — 吃什么 / 选品牌 / 扔硬币（三合一）
+- accounting.html — 记账工作台
